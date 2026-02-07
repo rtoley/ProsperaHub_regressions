@@ -1,0 +1,124 @@
+==================================================
+Hyperplane VPU Testbench v0.1
+  VLEN=64, NLANES=1, ELEN=32, DLEN=64
+==================================================
+  +seed=99999
+[39000] Reset complete
+
+======== QUICK SMOKE TEST ========
+[39000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[63000] VRF[v2] = 0x0000000000000000
+[65000] VRF[v1] = 0x0000000000000000
+[65000] ISSUE: 0x022081d7 (rs1=0x00000000, rs2=0x00000000)
+[93000] PASS: test_vadd_vv_sew8_000 - v3[0] = 0x0000000000000000 (SEW=8)
+[93000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[117000] VRF[v2] = 0x0000000000000000
+[117000] ISSUE: 0x0220c1d7 (rs1=0x00000000, rs2=0x00000000)
+[145000] PASS: test_vadd_vx_sew8_000 - v3[0] = 0x0000000000000000 (SEW=8)
+[145000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[169000] VRF[v2] = 0x1010101010101010
+[169000] ISSUE: 0x022031d7 (rs1=0x00000000, rs2=0x00000000)
+[197000] PASS: test_vadd_vi_sew8_000 - v3[0] = 0x0000000000000010 (SEW=8)
+[197000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[221000] VRF[v2] = 0x0202020202020202
+[223000] VRF[v1] = 0x0303030303030303
+[223000] ISSUE: 0x9620a1d7 (rs1=0x00000000, rs2=0x00000000)
+[251000] PASS: test_vmul_vv_sew8_000 - v3[0] = 0x0000000000000006 (SEW=8)
+[251000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[275000] VRF[v3] = 0x1010101010101010
+[277000] VRF[v2] = 0x0202020202020202
+[279000] VRF[v1] = 0x0303030303030303
+[279000] ISSUE: 0xb620a1d7 (rs1=0x00000000, rs2=0x00000000)
+[307000] PASS: test_vmacc_vv_sew8_000 - v3[0] = 0x0000000000000016 (SEW=8)
+[307000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[331000] VRF[v2] = 0x7f7f7f7f7f7f7f7f
+[333000] VRF[v1] = 0x0101010101010101
+[333000] ISSUE: 0x822081d7 (rs1=0x00000000, rs2=0x00000000)
+[361000] PASS: test_vsaddu_vv_sew8_000 - v3[0] = 0x0000000000000080 (SEW=8)
+[361000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[385000] VRF[v2] = 0x0000000000000000
+[387000] VRF[v1] = 0x0000000000000000
+[389000] VRF[v0] = 0x0000000000000000
+[389000] ISSUE: 0x62208057 (rs1=0x00000000, rs2=0x00000000)
+[417000] PASS: test_vmseq_vv_sew8_000
+[417000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[441000] VRF[v2] = 0x0101010101010101
+[443000] VRF[v1] = 0x0000000000000000
+[445000] VRF[v3] = 0xffffffffffffffff
+[445000] ISSUE: 0x0220a1d7 (rs1=0x00000000, rs2=0x00000000)
+[473000] PASS: test_vredsum_vs_sew8_000 - v3[0] = 0x0000000000000008 (SEW=8)
+[473000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[497000] VRF[v2] = 0x0101010101010101
+[497000] ISSUE: 0x4a2021d7 (rs1=0x00000000, rs2=0x00000000)
+[525000] PASS: test_vexp_v_sew8_000 - v3 = 0x1111111111111111 (non-zero)
+[525000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[549000] VRF[v2] = 0x0000000000000000
+[551000] VRF[v1] = 0x0000000000000000
+[553000] VRF[v0] = 0x0000000000000000
+[553000] ISSUE: 0x6620a057 (rs1=0x00000000, rs2=0x00000000)
+[581000] PASS: test_vmand_mm_000
+[581000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[605000] VRF[v2] = 0x0000000000000000
+[605000] ISSUE: 0x42282057 (rs1=0x00000000, rs2=0x00000000)
+[627000] vcpop.m test executed (mask=0x00000000, expected count=0)
+[627000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[651000] VRF[v1] = 0x0000000000000000
+[653000] VRF[v3] = 0x0000000000000000
+[653000] ISSUE: 0x5e0081d7 (rs1=0x00000000, rs2=0x00000000)
+[681000] PASS: test_vmv_v_v_sew8_000 - v3[0] = 0x0000000000000000 (SEW=8)
+[681000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[705000] VRF[v2] = 0x0101010101010101
+[707000] VRF[v1] = 0x0101010101010101
+[709000] VRF[v4] = 0x0000000000000000
+[709000] ISSUE: 0xc2208257 (rs1=0x00000000, rs2=0x00000000)
+[737000] PASS: test_vwaddu_vv_sew8_000 - v4[0] = 0x0000000000000002 (SEW=16)
+[737000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[761000] VRF[v2] = 0x8080808080808080
+[763000] VRF[v1] = 0x0101010101010101
+[763000] ISSUE: 0xaa2081d7 (rs1=0x00000000, rs2=0x00000000)
+[791000] PASS: test_vssrl_vv_sew8_000 - v3[0] = 0x0000000000000040 (SEW=8)
+[791000] ISSUE: 0x00007057 (rs1=0x00000000, rs2=0x00000000)
+[815000] VRF[v2] = 0x0000000000000000
+[815000] ISSUE: 0x4e2021d7 (rs1=0x00000000, rs2=0x00000000)
+[837000] vpack4 test executed (input=0x00000000)
+QUICK: 15 tests completed
+[837000] Testing CSR capabilities...
+[849000] PASS: CSR capabilities read
+[849000] Testing illegal instruction rejection...
+[869000] OF_CAPTURE: vd=3 id=32 op=3
+[871000] LANE_INPUT: vd=3 id=32 op=3
+         stall_i=0 mac_stall=0 mul_stall=0 multicycle_busy=0
+         is_reduction=0 is_widening=0 e1m_valid=0 e1_valid=0
+[871000] E1_CAPTURE_ID_TRACE: vd=3 id=32 op=3 is_mul=0
+[875000] PASS: Illegal instruction rejection
+
+==================================================
+Test Results: 17/17 passed
+*** ALL TESTS PASSED ***
+Performance counter: 16 operations
+==================================================
+tb/hp_vpu_tb.sv:5446: $finish called at 975000 (1ps)
+
+==================================================
+STRESS TEST INSTRUMENTATION - FINAL REPORT
+==================================================
+Total cycles:              472
+
+VRF Write Contentions:     0
+  - e3 && r3 contentions:  0
+  - e3 && w2 contentions:  0
+  - r3 && w2 contentions:  0
+
+Pipeline Valid Cycles:
+  - e3_valid cycles:       15
+  - r3_valid cycles:       1
+  - w2_valid cycles:       1
+
+Stall Statistics:
+  - mul_stall cycles:      0
+  - mac_stall cycles:      0
+  - red_busy cycles:       4
+  - wide_busy cycles:      2
+  - total stall cycles:    8
+  - max stall streak:      5
+==================================================

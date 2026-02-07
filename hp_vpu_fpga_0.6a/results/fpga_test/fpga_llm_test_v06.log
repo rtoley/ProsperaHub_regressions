@@ -1,0 +1,81 @@
+========================================
+  FPGA VPU LLM Inference Test
+========================================
+  Phase 1: GEMV (matrix-vector multiply)
+  Phase 2: Dot product (Q·K attention)
+  Phase 3: Back-to-back MAC stress
+========================================
+
+[5000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[15000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[25000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[35000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[45000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[55000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[65000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[75000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[85000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[95000] Reset released
+[95000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[105000] State: ST_RESET -> ST_LOAD_WEIGHTS
+[185000] State: ST_LOAD_WEIGHTS -> ST_LOAD_INPUT
+[195000] State: ST_LOAD_INPUT -> ST_LOAD_ACC
+[205000] State: ST_LOAD_ACC -> ST_GEMV_VSETVLI
+[215000] State: ST_GEMV_VSETVLI -> ST_GEMV_WAIT_CFG
+[225000] State: ST_GEMV_WAIT_CFG -> ST_GEMV_MAC
+[235000] State: ST_GEMV_MAC -> ST_GEMV_WAIT_MAC
+[325000] State: ST_GEMV_WAIT_MAC -> ST_GEMV_REDUCE
+[335000] State: ST_GEMV_REDUCE -> ST_GEMV_WAIT_RED
+[345000] State: ST_GEMV_WAIT_RED -> ST_DOT_LOAD
+[355000] State: ST_DOT_LOAD -> ST_DOT_MUL
+[365000] State: ST_DOT_MUL -> ST_DOT_WAIT_MUL
+[375000] State: ST_DOT_WAIT_MUL -> ST_DOT_RED
+[435000] State: ST_DOT_RED -> ST_DOT_WAIT_RED
+[515000] State: ST_DOT_WAIT_RED -> ST_STRESS_LOAD
+[525000] State: ST_STRESS_LOAD -> ST_STRESS_MAC1
+[535000] State: ST_STRESS_MAC1 -> ST_STRESS_MAC2
+[545000] State: ST_STRESS_MAC2 -> ST_STRESS_MAC3
+[585000] State: ST_STRESS_MAC3 -> ST_STRESS_MAC4
+[685000] State: ST_STRESS_MAC4 -> ST_STRESS_MAC5
+[785000] State: ST_STRESS_MAC5 -> ST_STRESS_MAC6
+[885000] State: ST_STRESS_MAC6 -> ST_STRESS_MAC7
+[985000] State: ST_STRESS_MAC7 -> ST_STRESS_MAC8
+[1085000] State: ST_STRESS_MAC8 -> ST_STRESS_WAIT
+[1185000] State: ST_STRESS_WAIT -> ST_CHECK_STRESS
+[1195000] State: ST_CHECK_STRESS -> ST_READ_RESULT
+[1205000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[1215000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[1225000] State: ST_WAIT_RDATA -> ST_CHECK_GEMV
+[1235000] State: ST_CHECK_GEMV -> ST_PASS
+[1235000] Test completed
+
+========================================
+  PASS - LLM inference test succeeded
+  Total operations: 11
+========================================
+
+tb/fpga_vpu_llm_test_tb.sv:69: $finish called at 1335000 (1ps)
+
+==================================================
+STRESS TEST INSTRUMENTATION - FINAL REPORT
+==================================================
+Total cycles:              124
+
+VRF Write Contentions:     0
+  - e3 && r3 contentions:  0
+  - e3 && w2 contentions:  0
+  - r3 && w2 contentions:  0
+
+Pipeline Valid Cycles:
+  - e3_valid cycles:       8
+  - r3_valid cycles:       2
+  - w2_valid cycles:       0
+
+Stall Statistics:
+  - mul_stall cycles:      0
+  - mac_stall cycles:      0
+  - red_busy cycles:       8
+  - wide_busy cycles:      0
+  - total stall cycles:    10
+  - max stall streak:      5
+==================================================
