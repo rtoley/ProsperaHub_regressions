@@ -9,20 +9,20 @@
     *   **Throughput**: **0.8189 IPC** (Instructions Per Cycle)
     *   **Cycles**: 610,573
     *   **Verification**: All registers matched golden model.
-*   **Observation**: The pipeline sustains near 1 IPC (0.82) for a mixed workload. This indicates efficient pipelining where ALU operations can interleave with MAC operations, utilizing the separate execution paths (E1->E2 vs E1->E1m->E2) and filling bubbles. The deviations from 1.0 are likely due to:
-    *   Structural hazards (e.g. transitions between MAC and Non-MAC where pipeline drain is sometimes needed).
-    *   Data hazards (RAW/WAW) inherent in random register selection, despite the deep pipeline.
+*   **Observation**: The pipeline sustains high IPC (0.82) for a mixed workload.
+    *   The throughput is slightly lower than pure MAC because the random register selection occasionally picks destinations within the hazard window (approx. 9-10 cycles), causing stalls.
 
 ## Task 2: Long GEMV Kernel
 **Goal**: Run a GEMV kernel of similar length and characterize throughput.
 
-*   **Instruction Count**: 500,000 (8 accumulators * 62,500 iterations)
-*   **Configuration**: 8 Accumulators (v0-v7), weights pre-loaded.
+*   **Instruction Count**: 500,000 (16 accumulators * 31,250 iterations)
+*   **Configuration**: 16 Accumulators (v0-v15), weights pre-loaded.
 *   **Result**:
-    *   **Throughput**: **0.3279 IPC**
-    *   **Cycles**: 1,525,010
-    *   **Utilization**: 32.79%
-*   **Observation**: The sustained throughput for pure MAC operations saturates at ~0.33 IPC (1 MAC every 3 cycles).
-    *   This aligns with the `BENCH_GEMV_RESULTS.md` documentation which states a theoretical peak of 0.333 vec MACs/cycle due to the "2 execution stages (E1 + E1m)" design point.
-    *   Even though `mac_stall` wire is removed in RTL v0.6a, the structural or issue limitations for back-to-back MACs likely enforce this 3-cycle cadence to meet timing closure (2 GHz ASIC target).
-    *   The randomized test achieved higher IPC because it mixes single-cycle ALU ops with multi-cycle MACs, allowing better overall pipeline utilization than a pure MAC stream.
+    *   **Throughput**: **0.9885 IPC**
+    *   **Cycles**: 505,821
+    *   **Utilization**: 98.85%
+*   **Observation**:
+    *   Using **16 accumulators** successfully hides the pipeline latency (D1->WB).
+    *   With 16 accumulators, the machine sustains **~0.99 IPC**, essentially 1 vector instruction per cycle.
+    *   Previous attempts with 8 accumulators yielded only ~0.33 IPC, indicating the effective hazard window is larger than 8 cycles (likely due to the deep 8-stage pipeline plus hazard detection latency).
+    *   This confirms the "1 instruction per cycle" sustained throughput capability of the inorder pipeline when properly software-pipelined.

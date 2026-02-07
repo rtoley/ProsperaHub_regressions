@@ -536,8 +536,8 @@ module hp_vpu_tb_bench;
     integer cycle_start, cycle_end, total_cycles;
     integer mac_ops, element_macs;
     integer i, k;
-    integer N_ACC = 8;
-    integer K_DIM = 62500; // 8 * 62500 = 500,000 instructions
+    integer N_ACC = 16;     // v1.6: Increased to 16 to hide full pipeline latency
+    integer K_DIM = 31250;  // 16 * 31250 = 500,000 instructions
 
     begin
       $display("");
@@ -632,6 +632,10 @@ module hp_vpu_tb_bench;
 
     do_reset(); set_vtype(3'b000, 3'b000, VLMAX_8);
     run_pure_mac(4, 128);
+
+    // v1.6: Test with 16 accumulators to see if pipeline depth requires it
+    do_reset(); set_vtype(3'b000, 3'b000, VLMAX_8);
+    run_pure_mac(16, 128);
 
     // v0.5e: Also test ALU baseline with more ops for comparison
     $display("");
