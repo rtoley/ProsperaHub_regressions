@@ -1,0 +1,241 @@
+========================================
+  FPGA VPU Self-Checking Test
+  Running 10 tests:
+    0. vadd.vv  - vector add
+    1. vmul.vv  - vector multiply
+    2. vredsum  - reduction sum
+    3. vand.vv  - vector AND
+    4. vsub.vv  - vector subtract
+    5. vor.vv   - vector OR
+    6. vxor.vv  - vector XOR
+    7. vmin.vv  - vector min (signed)
+    8. vmax.vv  - vector max (signed)
+    9. vminu.vv - vector min (unsigned)
+========================================
+
+[5000] State: ST_RESET -> ST_LOAD_V1
+[15000] State: ST_RESET -> ST_LOAD_V1
+[25000] State: ST_RESET -> ST_LOAD_V1
+[35000] State: ST_RESET -> ST_LOAD_V1
+[45000] State: ST_RESET -> ST_LOAD_V1
+[55000] State: ST_RESET -> ST_LOAD_V1
+[65000] State: ST_RESET -> ST_LOAD_V1
+[75000] State: ST_RESET -> ST_LOAD_V1
+[85000] State: ST_RESET -> ST_LOAD_V1
+[95000] Reset released
+[95000] State: ST_RESET -> ST_LOAD_V1
+[105000] State: ST_RESET -> ST_LOAD_V1
+[115000] State: ST_LOAD_V1 -> ST_LOAD_V2
+[125000] State: ST_LOAD_V2 -> ST_LOAD_V3
+[135000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[145000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[155000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[165000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[245000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[255000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[265000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[275000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[285000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[295000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[295000] PASS: Test 0 (vadd.vv)
+[305000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[315000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[315000] === Starting Test 1: vmul.vv ===
+[325000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[335000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[345000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[435000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[445000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[455000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[465000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[475000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[485000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[485000] PASS: Test 1 (vmul.vv)
+[495000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[505000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[505000] === Starting Test 2: vredsum ===
+[515000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[525000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[535000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[625000] State: ST_WAIT_OP -> ST_ISSUE_OP2
+[635000] State: ST_ISSUE_OP2 -> ST_WAIT_OP2
+[725000] State: ST_WAIT_OP2 -> ST_WAIT_DONE
+[735000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[745000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[755000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[765000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[775000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[775000] PASS: Test 2 (vredsum)
+[785000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[795000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[795000] === Starting Test 3: vand.vv ===
+[805000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[815000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[825000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[905000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[915000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[925000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[935000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[945000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[955000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[955000] PASS: Test 3 (vand.vv)
+[965000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[975000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[975000] === Starting Test 4: vsub.vv ===
+[985000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[995000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[1005000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[1085000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[1095000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[1105000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[1115000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[1125000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[1135000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[1135000] PASS: Test 4 (vsub.vv)
+[1145000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[1155000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[1155000] === Starting Test 5: vor.vv ===
+[1165000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[1175000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[1185000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[1265000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[1275000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[1285000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[1295000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[1305000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[1315000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[1315000] PASS: Test 5 (vor.vv)
+[1325000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[1335000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[1335000] === Starting Test 6: vxor.vv ===
+[1345000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[1355000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[1365000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[1445000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[1455000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[1465000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[1475000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[1485000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[1495000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[1495000] PASS: Test 6 (vxor.vv)
+[1505000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[1515000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[1515000] === Starting Test 7: vmin.vv ===
+[1525000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[1535000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[1545000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[1625000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[1635000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[1645000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[1655000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[1665000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[1675000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[1675000] PASS: Test 7 (vmin.vv)
+[1685000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[1695000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[1695000] === Starting Test 8: vmax.vv ===
+[1705000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[1705000] === Starting Test 8: vmax.vv ===
+[1715000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[1715000] === Starting Test 8: vmax.vv ===
+[1725000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[1725000] === Starting Test 8: vmax.vv ===
+[1735000] === Starting Test 8: vmax.vv ===
+[1745000] === Starting Test 8: vmax.vv ===
+[1755000] === Starting Test 8: vmax.vv ===
+[1765000] === Starting Test 8: vmax.vv ===
+[1775000] === Starting Test 8: vmax.vv ===
+[1785000] === Starting Test 8: vmax.vv ===
+[1795000] === Starting Test 8: vmax.vv ===
+[1805000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[1805000] === Starting Test 8: vmax.vv ===
+[1815000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[1815000] === Starting Test 8: vmax.vv ===
+[1825000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[1825000] === Starting Test 8: vmax.vv ===
+[1835000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[1835000] === Starting Test 8: vmax.vv ===
+[1845000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[1845000] === Starting Test 8: vmax.vv ===
+[1855000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[1855000] === Starting Test 8: vmax.vv ===
+[1855000] PASS: Test 8 (vmax.vv)
+[1865000] State: ST_NEXT_TEST -> ST_LOAD_V3
+[1865000] === Starting Test 8: vmax.vv ===
+[1875000] State: ST_LOAD_V3 -> ST_ISSUE_VSETVLI
+[1875000] === Starting Test 9: vminu.vv ===
+[1885000] State: ST_ISSUE_VSETVLI -> ST_WAIT_VSETVLI
+[1885000] === Starting Test 9: vminu.vv ===
+[1895000] State: ST_WAIT_VSETVLI -> ST_ISSUE_OP
+[1895000] === Starting Test 9: vminu.vv ===
+[1905000] State: ST_ISSUE_OP -> ST_WAIT_OP
+[1905000] === Starting Test 9: vminu.vv ===
+[1915000] === Starting Test 9: vminu.vv ===
+[1925000] === Starting Test 9: vminu.vv ===
+[1935000] === Starting Test 9: vminu.vv ===
+[1945000] === Starting Test 9: vminu.vv ===
+[1955000] === Starting Test 9: vminu.vv ===
+[1965000] === Starting Test 9: vminu.vv ===
+[1975000] === Starting Test 9: vminu.vv ===
+[1985000] State: ST_WAIT_OP -> ST_WAIT_DONE
+[1985000] === Starting Test 9: vminu.vv ===
+[1995000] State: ST_WAIT_DONE -> ST_READ_RESULT
+[1995000] === Starting Test 9: vminu.vv ===
+[2005000] State: ST_READ_RESULT -> ST_LATCH_RESULT
+[2005000] === Starting Test 9: vminu.vv ===
+[2015000] State: ST_LATCH_RESULT -> ST_WAIT_RDATA
+[2015000] === Starting Test 9: vminu.vv ===
+[2025000] State: ST_WAIT_RDATA -> ST_CHECK_RESULT
+[2025000] === Starting Test 9: vminu.vv ===
+[2035000] State: ST_CHECK_RESULT -> ST_NEXT_TEST
+[2035000] === Starting Test 9: vminu.vv ===
+[2035000] PASS: Test 9 (vminu.vv)
+[2045000] State: ST_NEXT_TEST -> ST_PASS
+[2045000] === Starting Test 9: vminu.vv ===
+[2045000] Test sequence completed
+[2055000] === Starting Test 10: unknown ===
+[2065000] === Starting Test 10: unknown ===
+[2075000] === Starting Test 10: unknown ===
+[2085000] === Starting Test 10: unknown ===
+[2095000] === Starting Test 10: unknown ===
+[2105000] === Starting Test 10: unknown ===
+[2115000] === Starting Test 10: unknown ===
+[2125000] === Starting Test 10: unknown ===
+[2135000] === Starting Test 10: unknown ===
+[2145000] === Starting Test 10: unknown ===
+
+========================================
+  PASS - All 10 tests passed!
+========================================
+
+LED status: [3:0] = 0001
+  led[0] PASS = 1
+  led[1] FAIL = 0
+  led[2] BUSY = 0
+  led[3] RUN  = 0
+
+tb/fpga_vpu_test_tb.sv:118: $finish called at 2145000 (1ps)
+
+==================================================
+STRESS TEST INSTRUMENTATION - FINAL REPORT
+==================================================
+Total cycles:              205
+
+VRF Write Contentions:     0
+  - e3 && r3 contentions:  0
+  - e3 && w2 contentions:  0
+  - r3 && w2 contentions:  0
+
+Pipeline Valid Cycles:
+  - e3_valid cycles:       10
+  - r3_valid cycles:       1
+  - w2_valid cycles:       0
+
+Stall Statistics:
+  - mul_stall cycles:      0
+  - mac_stall cycles:      0
+  - red_busy cycles:       4
+  - wide_busy cycles:      0
+  - total stall cycles:    5
+  - max stall streak:      5
+==================================================
