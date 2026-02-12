@@ -10,7 +10,7 @@ SC_MODULE(hp_vpu_lanes) {
     // Clock/Reset
     sc_in<bool> clk;
     sc_in<bool> rst_n;
-    sc_in<bool> stall_i;
+    sc_in<bool> stall_i; // From Hazard (sram_stall usually)
 
     // Inputs (from Decode)
     sc_in<bool> valid_i;
@@ -36,8 +36,7 @@ SC_MODULE(hp_vpu_lanes) {
 
     sc_out<bool> mac_stall_o;
     sc_out<bool> mul_stall_o;
-    sc_out<bool> drain_stall_o;      // To Hazard
-    sc_out<bool> multicycle_busy_o;  // To Hazard
+    sc_out<bool> multicycle_busy_o;
 
     // Hazard tracking outputs
     sc_out<bool> e1_valid_o; sc_out<sc_uint<5>> e1_vd_o;
@@ -46,14 +45,12 @@ SC_MODULE(hp_vpu_lanes) {
     sc_out<bool> e3_valid_o; sc_out<sc_uint<5>> e3_vd_o;
     sc_out<bool> r2a_valid_o; sc_out<sc_uint<5>> r2a_vd_o;
     sc_out<bool> r2b_valid_o; sc_out<sc_uint<5>> r2b_vd_o;
-    sc_out<bool> w2_valid_o; sc_out<sc_uint<5>> w2_vd_o; // Missing in previous version
 
     // Internal Pipeline Registers
     // E1 Stage
     bool e1_valid;
     vpu_op_e e1_op;
-    sc_biguint<DLEN> e1_a, e1_b, e1_c, e1_old_vd, e1_vmask;
-    bool e1_vm;
+    sc_biguint<DLEN> e1_a, e1_b, e1_c;
     sc_uint<5> e1_vd;
     sc_uint<CVXIF_ID_W> e1_id;
     sew_e e1_sew;
@@ -66,15 +63,13 @@ SC_MODULE(hp_vpu_lanes) {
     sc_uint<5> e1m_vd;
     sc_uint<CVXIF_ID_W> e1m_id;
     sew_e e1m_sew;
-    sc_biguint<DLEN> e1m_c, e1m_old_vd, e1m_vmask;
-    bool e1m_vm;
+    sc_biguint<DLEN> e1m_c;
     bool e1m_is_last_uop;
 
     // E2 Stage
     bool e2_valid;
     vpu_op_e e2_op;
-    sc_biguint<DLEN> e2_result, e2_old_vd, e2_vmask;
-    bool e2_vm;
+    sc_biguint<DLEN> e2_result;
     sc_uint<5> e2_vd;
     sc_uint<CVXIF_ID_W> e2_id;
     sew_e e2_sew;
@@ -87,34 +82,21 @@ SC_MODULE(hp_vpu_lanes) {
     sc_uint<CVXIF_ID_W> e3_id;
     bool e3_is_last_uop;
 
-    // R1 Registers (Reduction)
-    sc_biguint<DLEN> r1_vs2;
-    sc_biguint<DLEN> r1_vs1;
-    vpu_op_e r1_op;
-    sew_e r1_sew;
-    sc_uint<5> r1_vd;
-    sc_uint<CVXIF_ID_W> r1_id;
-
-    // W1 Registers (Widening)
-    sc_biguint<DLEN> w1_vs2, w1_vs1, w1_old_vd;
-    vpu_op_e w1_op;
-    sew_e w1_sew;
-    sc_uint<5> w1_vd;
-    sc_uint<CVXIF_ID_W> w1_id;
-
-    // Pipeline State Machines
+    // Reduction Pipeline State
     enum red_state_e { RED_IDLE, RED_R1, RED_R2A, RED_R2B, RED_R3 };
-    sc_signal<int> red_state;
+    sc_signal<int> red_state; // red_state_e
 
+    // Widening Pipeline State
     enum wide_state_e { WIDE_IDLE, WIDE_W1, WIDE_W2 };
-    sc_signal<int> wide_state;
+    sc_signal<int> wide_state; // wide_state_e
 
-    // Output Stage Registers (simplified mux inputs)
+    // Reduction Registers (simplified representation)
     bool r3_valid;
     sc_biguint<DLEN> r3_result;
     sc_uint<5> r3_vd;
     sc_uint<CVXIF_ID_W> r3_id;
 
+    // Widening Registers
     bool w2_valid;
     sc_biguint<DLEN> w2_result;
     sc_uint<5> w2_vd;
@@ -127,25 +109,15 @@ SC_MODULE(hp_vpu_lanes) {
         SC_CTHREAD(logic_thread, clk.pos());
         reset_signal_is(rst_n, false);
         SC_METHOD(outputs_method);
-        sensitive << clk; // Updates based on internal state
+        sensitive << clk;
     }
 
-    // ALU functions declarations (Fixed signatures)
-    sc_biguint<DLEN> alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, bool is_sub);
-    sc_biguint<DLEN> alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, bool high_half, bool signed_a, bool signed_b);
+    // ALU functions
+    sc_biguint<DLEN> alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
+    sc_biguint<DLEN> alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
     sc_biguint<DLEN> alu_lut(vpu_op_e op, sc_biguint<DLEN> idx, sew_e sew);
-    sc_biguint<DLEN> alu_logic(sc_biguint<DLEN> a, sc_biguint<DLEN> b, vpu_op_e op);
-    sc_biguint<DLEN> alu_shift(sc_biguint<DLEN> val, sc_biguint<DLEN> shamt, sew_e sew, vpu_op_e op);
-    sc_biguint<DLEN> alu_minmax(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
-    sc_biguint<DLEN> alu_cmp(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
-    sc_biguint<DLEN> alu_sat(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
-    sc_biguint<DLEN> alu_int4(sc_biguint<DLEN> val, vpu_op_e op);
-
-    // Helpers
-    sc_biguint<DLEN> apply_mask(sc_biguint<DLEN> result, sc_biguint<DLEN> old_vd, sc_biguint<DLEN> mask, bool vm, sew_e sew);
     bool is_reduction(vpu_op_e op);
     bool is_widening(vpu_op_e op);
-    sc_biguint<DLEN> scalar_replicate(sc_uint<32> scalar, sew_e sew);
 };
 
 } // namespace hp_vpu

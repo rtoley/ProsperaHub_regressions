@@ -13,11 +13,13 @@ struct iq_entry_t {
     sc_uint<32> rs1;
     sc_uint<32> rs2;
 
+    // Equality operator for SystemC signal support
     bool operator==(const iq_entry_t& other) const {
         return (instr == other.instr && id == other.id && rs1 == other.rs1 && rs2 == other.rs2);
     }
 };
 
+// Define ostream operator for logging
 inline std::ostream& operator<<(std::ostream& os, const iq_entry_t& t) {
     os << "instr=" << t.instr << " id=" << t.id;
     return os;
@@ -25,7 +27,7 @@ inline std::ostream& operator<<(std::ostream& os, const iq_entry_t& t) {
 
 // Instruction Queue (FIFO)
 // Decouples scalar core issue from vector pipeline.
-// Depth: 8 entries
+// Depth: 8 entries (matching RTL)
 SC_MODULE(hp_vpu_iq) {
     // Clock/Reset
     sc_in<bool> clk;
@@ -62,13 +64,16 @@ SC_MODULE(hp_vpu_iq) {
             wr_ptr.write(0);
             rd_ptr.write(0);
             count.write(0);
+            push_ready_o.write(false); // RTL might have ready low during reset? Actually usually high unless full.
+                                       // Assuming reset clears ready for a cycle.
+            pop_valid_o.write(false);
             return;
         }
 
         bool push = push_valid_i.read() && (count.read() < DEPTH);
-        bool pop_valid = (count.read() > 0) || (push_valid_i.read() && count.read() == 0); // Bypass available?
-        bool pop = pop_valid && pop_ready_i.read();
+        bool pop = pop_valid_o.read() && pop_ready_i.read(); // Valid output and consumer ready (consumer ready is !stall)
 
+        // Update pointers and count
         int next_wr = wr_ptr.read();
         int next_rd = rd_ptr.read();
         int next_count = count.read();
@@ -83,47 +88,41 @@ SC_MODULE(hp_vpu_iq) {
         }
 
         if (pop) {
-            // Only advance read pointer if we popped from FIFO (not bypass)
-            if (count.read() > 0) {
-                next_rd = (next_rd + 1) % DEPTH;
-                next_count--;
-            } else if (push) {
-                // Bypass case: pushed and popped in same cycle, count stays 0, pointers don't move
-                // But wait, if we push to fifo[wr] and pop from bypass, fifo[wr] is overwritten next time?
-                // RTL typically writes to RAM.
-                // Simplified model: If empty and push+pop, we just pass through combinatorialy (output_logic handles data),
-                // and don't increment count.
-                next_count--; // Cancel out the ++ from push
-            }
+            next_rd = (next_rd + 1) % DEPTH;
+            next_count--;
         }
+
+        // Simultaneous push/pop adjustment
+        // If both happen, count stays same (already handled by ++ and -- above logic if sequential,
+        // but here we used if/if so we need to be careful. count update should be net change)
+        if (push && pop) next_count = count.read(); // No change
 
         wr_ptr.write(next_wr);
         rd_ptr.write(next_rd);
         count.write(next_count);
+
+        // Output logic (Combinational based on current state)
+        // Note: In SystemC SC_CTHREAD/METHOD updates next cycle.
+        // We need combinatorial outputs for ready/valid handshake?
+        // RTL hp_vpu_iq.sv likely has combinatorial valid/ready outputs logic based on count.
     }
 
     void output_logic() {
         int cnt = count.read();
         int rd = rd_ptr.read();
 
+        // Push ready if not full
         push_ready_o.write(cnt < DEPTH);
 
-        // Bypass logic: If empty but pushing, data is valid immediately
-        bool bypass = (cnt == 0) && push_valid_i.read();
-        bool valid = (cnt > 0) || bypass;
-
+        // Pop valid if not empty
+        bool valid = (cnt > 0);
         pop_valid_o.write(valid);
 
-        if (cnt > 0) {
+        if (valid) {
             pop_instr_o.write(fifo[rd].instr);
             pop_id_o.write(fifo[rd].id);
             pop_rs1_o.write(fifo[rd].rs1);
             pop_rs2_o.write(fifo[rd].rs2);
-        } else if (bypass) {
-            pop_instr_o.write(push_instr_i.read());
-            pop_id_o.write(push_id_i.read());
-            pop_rs1_o.write(push_rs1_i.read());
-            pop_rs2_o.write(push_rs2_i.read());
         } else {
             pop_instr_o.write(0);
             pop_id_o.write(0);
@@ -137,7 +136,7 @@ SC_MODULE(hp_vpu_iq) {
         reset_signal_is(rst_n, false);
 
         SC_METHOD(output_logic);
-        sensitive << count << rd_ptr << push_valid_i << push_instr_i << push_id_i << push_rs1_i << push_rs2_i;
+        sensitive << count << rd_ptr; // Updates when state changes
     }
 };
 

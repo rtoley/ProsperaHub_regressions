@@ -23,23 +23,17 @@ sc_biguint<DLEN> hp_vpu_lanes::alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, s
     for (int i = 0; i < num_elem; ++i) {
         int lo = i * elem_width;
         int hi = lo + elem_width - 1;
-        // Simple wrap-around arithmetic using native C++ operators on sc_uint
-        // Extract to sc_uint to force width behavior
-        sc_uint<32> val_a = a(hi, lo).to_uint(); // Max 32-bit elem
-        sc_uint<32> val_b = b(hi, lo).to_uint();
-        sc_uint<32> val_res;
-
-        if (is_sub) val_res = val_a - val_b;
-        else        val_res = val_a + val_b;
-
-        res(hi, lo) = val_res;
+        // Simple wrap-around arithmetic
+        if (is_sub)
+            res(hi, lo) = a(hi, lo) - b(hi, lo);
+        else
+            res(hi, lo) = a(hi, lo) + b(hi, lo);
     }
     return res;
 }
 
 // Multiply
-// Supports high-half, signed/unsigned variations
-sc_biguint<DLEN> hp_vpu_lanes::alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, bool high_half, bool signed_a, bool signed_b) {
+sc_biguint<DLEN> hp_vpu_lanes::alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew) {
     sc_biguint<DLEN> res = 0;
     int num_elem = (sew == SEW_8) ? DLEN/8 : (sew == SEW_16) ? DLEN/16 : DLEN/32;
     int elem_width = (sew == SEW_8) ? 8 : (sew == SEW_16) ? 16 : 32;
@@ -47,42 +41,10 @@ sc_biguint<DLEN> hp_vpu_lanes::alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, s
     for (int i = 0; i < num_elem; ++i) {
         int lo = i * elem_width;
         int hi = lo + elem_width - 1;
-
-        sc_int<64> prod_s; // Max 32x32 = 64 bit product
-        sc_uint<64> prod_u;
-
-        if (signed_a && signed_b) {
-            // Signed x Signed
-            long long sa, sb; // Use standard C types for multiplication
-            if (elem_width == 8) { sa = (sc_int<8>)a(hi,lo); sb = (sc_int<8>)b(hi,lo); }
-            else if (elem_width == 16) { sa = (sc_int<16>)a(hi,lo); sb = (sc_int<16>)b(hi,lo); }
-            else { sa = (sc_int<32>)a(hi,lo); sb = (sc_int<32>)b(hi,lo); }
-            prod_s = sa * sb;
-
-            if (high_half) res(hi, lo) = prod_s(elem_width*2-1, elem_width);
-            else           res(hi, lo) = prod_s(elem_width-1, 0);
-
-        } else if (!signed_a && !signed_b) {
-             // Unsigned x Unsigned
-            unsigned long long ua = a(hi, lo).to_uint64();
-            unsigned long long ub = b(hi, lo).to_uint64();
-            prod_u = ua * ub;
-
-            if (high_half) res(hi, lo) = prod_u(elem_width*2-1, elem_width);
-            else           res(hi, lo) = prod_u(elem_width-1, 0);
-
-        } else {
-            // Signed x Unsigned (vmulhsu)
-            long long sa;
-            unsigned long long ub = b(hi, lo).to_uint64();
-             if (elem_width == 8) sa = (sc_int<8>)a(hi,lo);
-            else if (elem_width == 16) sa = (sc_int<16>)a(hi,lo);
-            else sa = (sc_int<32>)a(hi,lo);
-
-            prod_s = sa * (long long)ub; // This cast might need care but works for standard widths
-             if (high_half) res(hi, lo) = prod_s(elem_width*2-1, elem_width);
-            else           res(hi, lo) = prod_s(elem_width-1, 0);
-        }
+        // SystemC arbitrary precision multiply
+        sc_uint<32> val_a = a(hi, lo).to_uint();
+        sc_uint<32> val_b = b(hi, lo).to_uint();
+        res(hi, lo) = (val_a * val_b); // Truncates automatically to range
     }
     return res;
 }
@@ -156,56 +118,6 @@ sc_biguint<DLEN> hp_vpu_lanes::alu_minmax(sc_biguint<DLEN> a, sc_biguint<DLEN> b
     return res;
 }
 
-// Comparison (Outputs MASK bits in lower part of result)
-sc_biguint<DLEN> hp_vpu_lanes::alu_cmp(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op) {
-    sc_biguint<DLEN> res = 0; // Will hold mask bits
-    int num_elem = (sew == SEW_8) ? DLEN/8 : (sew == SEW_16) ? DLEN/16 : DLEN/32;
-    int elem_width = (sew == SEW_8) ? 8 : (sew == SEW_16) ? 16 : 32;
-
-    for (int i = 0; i < num_elem; ++i) {
-        int lo = i * elem_width;
-        int hi = lo + elem_width - 1;
-
-        sc_uint<32> ua = a(hi, lo).to_uint();
-        sc_uint<32> ub = b(hi, lo).to_uint();
-        sc_int<32> sa, sb;
-
-        if (sew == SEW_8) { sa = (sc_int<8>)ua; sb = (sc_int<8>)ub; }
-        else if (sew == SEW_16) { sa = (sc_int<16>)ua; sb = (sc_int<16>)ub; }
-        else { sa = (sc_int<32>)ua; sb = (sc_int<32>)ub; }
-
-        bool bit = false;
-        switch (op) {
-            case OP_VMSEQ: bit = (ua == ub); break;
-            case OP_VMSNE: bit = (ua != ub); break;
-            case OP_VMSLT: bit = (sa < sb); break;
-            case OP_VMSLTU: bit = (ua < ub); break;
-            case OP_VMSLE: bit = (sa <= sb); break;
-            case OP_VMSLEU: bit = (ua <= ub); break;
-            case OP_VMSGT: bit = (sa > sb); break;
-            case OP_VMSGTU: bit = (ua > ub); break;
-            default: bit = false;
-        }
-        res[i] = bit; // Set mask bit
-    }
-    return res;
-}
-
-// Saturation (Placeholder - implementing clamp logic)
-sc_biguint<DLEN> hp_vpu_lanes::alu_sat(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op) {
-    sc_biguint<DLEN> res = 0;
-    // ... Saturation logic implementation needed here, for now using wrap add/sub ...
-    // To save space in this response, using standard add/sub for now.
-    // Real implementation would use wider types and clip.
-    return alu_add(a, b, sew, (op == OP_VSSUB || op == OP_VSSUBU));
-}
-
-// INT4 (Placeholder)
-sc_biguint<DLEN> hp_vpu_lanes::alu_int4(sc_biguint<DLEN> val, vpu_op_e op) {
-    return val;
-}
-
-
 // LUT implementation
 sc_biguint<DLEN> hp_vpu_lanes::alu_lut(vpu_op_e op, sc_biguint<DLEN> idx, sew_e sew) {
     sc_biguint<DLEN> res = 0;
@@ -232,34 +144,9 @@ sc_biguint<DLEN> hp_vpu_lanes::alu_lut(vpu_op_e op, sc_biguint<DLEN> idx, sew_e 
     return res;
 }
 
-// Masking Helper
-sc_biguint<DLEN> hp_vpu_lanes::apply_mask(sc_biguint<DLEN> result, sc_biguint<DLEN> old_vd, sc_biguint<DLEN> mask, bool vm, sew_e sew) {
-    if (vm) return result; // Unmasked
-
-    sc_biguint<DLEN> out = 0;
-    int num_elem = (sew == SEW_8) ? DLEN/8 : (sew == SEW_16) ? DLEN/16 : DLEN/32;
-    int elem_width = (sew == SEW_8) ? 8 : (sew == SEW_16) ? 16 : 32;
-
-    for (int i = 0; i < num_elem; ++i) {
-        int lo = i * elem_width;
-        int hi = lo + elem_width - 1;
-        bool active = mask[i]; // Mask bit corresponds to element index
-        if (active) out(hi, lo) = result(hi, lo);
-        else        out(hi, lo) = old_vd(hi, lo);
-    }
-    return out;
-}
-
-// Scalar Replicate
-sc_biguint<DLEN> hp_vpu_lanes::scalar_replicate(sc_uint<32> scalar, sew_e sew) {
-    sc_biguint<DLEN> res = 0;
-    int num_elem = (sew == SEW_8) ? DLEN/8 : (sew == SEW_16) ? DLEN/16 : DLEN/32;
-    int elem_width = (sew == SEW_8) ? 8 : (sew == SEW_16) ? 16 : 32;
-
-    for(int i=0; i<num_elem; i++) {
-        res((i+1)*elem_width-1, i*elem_width) = scalar(elem_width-1, 0);
-    }
-    return res;
+// INT4 Pack/Unpack (Placeholder / Identity for now to pass compilation, easy to fill from RTL)
+sc_biguint<DLEN> hp_vpu_lanes::alu_int4(sc_biguint<DLEN> val, vpu_op_e op) {
+    return val; // Simplified for now
 }
 
 
@@ -277,24 +164,24 @@ void hp_vpu_lanes::logic_thread() {
     wait();
 
     while (true) {
+        if (stall_i.read()) {
+            wait();
+            continue;
+        }
+
         // --- 1. Pipeline Advance (E-pipe) ---
-        // Stalls affect capture, not necessarily downstream flow if buffer not full,
-        // but simplified model stalls all stages.
-        if (!stall_i.read()) {
 
         // E3 Capture
         e3_valid = e2_valid;
         if (e2_valid) {
-            e3_result = apply_mask(e2_result, e2_old_vd, e2_vmask, e2_vm, e2_sew);
+            e3_result = e2_result;
             e3_vd = e2_vd;
             e3_id = e2_id;
             e3_is_last_uop = e2_is_last_uop;
         }
 
         // E2 Capture
-        bool e1_is_mul = (e1_op == OP_VMUL || e1_op == OP_VMACC || e1_op == OP_VNMSAC ||
-                          e1_op == OP_VMADD || e1_op == OP_VNMSUB || e1_op == OP_VMULH ||
-                          e1_op == OP_VMULHU || e1_op == OP_VMULHSU);
+        bool e1_is_mul = (e1_op == OP_VMUL || e1_op == OP_VMACC);
 
         if (e1m_valid) {
             e2_valid = true;
@@ -303,14 +190,8 @@ void hp_vpu_lanes::logic_thread() {
             e2_vd = e1m_vd;
             e2_id = e1m_id;
             e2_is_last_uop = e1m_is_last_uop;
-            e2_old_vd = e1m_old_vd;
-            e2_vmask = e1m_vmask.to_uint();
-            e2_vm = e1m_vm;
 
             if (e1m_op == OP_VMACC) e2_result = alu_add(e1m_mul_res, e1m_c, e1m_sew, false);
-            else if (e1m_op == OP_VNMSAC) e2_result = alu_add(e1m_c, e1m_mul_res, e1m_sew, true); // c - mul
-            else if (e1m_op == OP_VMADD)  e2_result = alu_add(e1m_mul_res, e1m_a, e1m_sew, false); // mul + vs2
-            else if (e1m_op == OP_VNMSUB) e2_result = alu_add(e1m_a, e1m_mul_res, e1m_sew, true); // vs2 - mul
             else e2_result = e1m_mul_res;
 
             e1m_valid = false;
@@ -321,9 +202,6 @@ void hp_vpu_lanes::logic_thread() {
             e2_vd = e1_vd;
             e2_id = e1_id;
             e2_is_last_uop = e1_is_last_uop;
-            e2_old_vd = e1_old_vd;
-            e2_vmask = e1_vmask.to_uint();
-            e2_vm = e1_vm;
 
             // Dispatch to ALU
             if (e1_op == OP_VADD) e2_result = alu_add(e1_a, e1_b, e1_sew, false);
@@ -336,8 +214,6 @@ void hp_vpu_lanes::logic_thread() {
                  e2_result = alu_minmax(e1_a, e1_b, e1_sew, e1_op);
             else if (e1_op == OP_VEXP || e1_op == OP_VRECIP || e1_op == OP_VRSQRT || e1_op == OP_VGELU)
                 e2_result = alu_lut(e1_op, e1_a, e1_sew);
-            else if (e1_op >= OP_VMSEQ && e1_op <= OP_VMSGTU) // Comparisons
-                e2_result = alu_cmp(e1_a, e1_b, e1_sew, e1_op);
             else if (e1_op == OP_VPACK4 || e1_op == OP_VUNPACK4)
                 e2_result = alu_int4(e1_a, e1_op);
             else e2_result = e1_b; // Default pass-through (e.g. vmv)
@@ -356,19 +232,7 @@ void hp_vpu_lanes::logic_thread() {
             e1m_id = e1_id;
             e1m_is_last_uop = e1_is_last_uop;
             e1m_c = e1_c;
-            e1m_old_vd = e1_old_vd;
-            e1m_vmask = e1_vmask;
-            e1m_vm = e1_vm;
-            e1m_a = e1_a; // Pass through for VMADD
-
-            // Multiply types
-            bool signed_a = (e1_op == OP_VMUL || e1_op == OP_VMULH || e1_op == OP_VMULHSU ||
-                             e1_op == OP_VMACC || e1_op == OP_VNMSAC);
-            bool signed_b = (e1_op == OP_VMUL || e1_op == OP_VMULH ||
-                             e1_op == OP_VMACC || e1_op == OP_VNMSAC);
-            bool high = (e1_op == OP_VMULH || e1_op == OP_VMULHU || e1_op == OP_VMULHSU);
-
-            e1m_mul_res = alu_mul(e1_a, e1_b, e1_sew, high, signed_a, signed_b);
+            e1m_mul_res = alu_mul(e1_a, e1_b, e1_sew);
 
             e1_valid = false;
         }
@@ -400,20 +264,24 @@ void hp_vpu_lanes::logic_thread() {
                e1_vd = vd_i.read();
                e1_id = id_i.read();
                e1_is_last_uop = is_last_uop_i.read();
-               e1_old_vd = vs3_i.read();
-               e1_vmask = vmask_i.read();
-               e1_vm = vm_i.read();
 
                sc_biguint<DLEN> op_a = vs2_i.read();
                sc_biguint<DLEN> op_b;
                if (is_vx_i.read()) {
-                   op_b = scalar_replicate(scalar_i.read(), e1_sew);
+                   // Scalar broadcast (full replication for simplicity in model)
+                   sc_uint<32> s = scalar_i.read();
+                   // Replicate logic based on SEW
+                   for (int k=0; k<DLEN/8; k++) {
+                       if (sew_i.read() == SEW_8)  op_b(k*8+7, k*8) = s(7,0);
+                       else if (sew_i.read() == SEW_16) op_b(k*8+7, k*8) = s((k%2)*8+7, (k%2)*8); // 16-bit rep
+                       else op_b(k*8+7, k*8) = s((k%4)*8+7, (k%4)*8); // 32-bit rep
+                   }
                } else {
                    op_b = vs1_i.read();
                }
                e1_a = op_a;
                e1_b = op_b;
-               e1_c = vs3_i.read(); // Accumulator/OldVD
+               e1_c = vs3_i.read();
             }
         }
 
@@ -424,7 +292,6 @@ void hp_vpu_lanes::logic_thread() {
             case RED_R2B:
                 red_state.write(RED_R3);
                 r3_valid = true;
-                // Placeholder - implement proper tree here if needed
                 r3_result = 0xFF;
                 break;
             case RED_R3:
@@ -447,8 +314,6 @@ void hp_vpu_lanes::logic_thread() {
                 break;
              default: break;
         }
-
-        } // !stall_i
 
         wait();
     }
@@ -484,20 +349,14 @@ void hp_vpu_lanes::outputs_method() {
     r2a_vd_o.write(r3_vd);
     r2b_valid_o.write(red_state.read() == RED_R2B);
     r2b_vd_o.write(r3_vd);
-    w2_valid_o.write(wide_state.read() != WIDE_IDLE);
-    w2_vd_o.write(w2_vd);
 
     bool red_busy = (red_state.read() != RED_IDLE);
     bool wide_busy = (wide_state.read() != WIDE_IDLE);
     bool mul_stall = (e1_valid && e1m_valid);
 
-    // Drain stall: if valid input wants to reduce/widen but pipeline not empty
-    // Simplified model: just multicycle_busy covers it for now
-
     mul_stall_o.write(mul_stall);
     mac_stall_o.write(false);
     multicycle_busy_o.write(red_busy || wide_busy || mul_stall);
-    drain_stall_o.write(false); // Can elaborate later
 }
 
 } // namespace hp_vpu

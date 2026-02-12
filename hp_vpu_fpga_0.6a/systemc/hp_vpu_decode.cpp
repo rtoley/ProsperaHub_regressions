@@ -45,15 +45,13 @@ void hp_vpu_decode::decode_combinational(
                 case 0b000100: op = OP_VMINU; break;
                 case 0b000111: op = OP_VMAX; break;
                 case 0b000110: op = OP_VMAXU; break;
-                case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // Corrected: vmerge/vmv here
                 case 0b011000: op = OP_VMSEQ; break;
                 case 0b011001: op = OP_VMSNE; break;
                 case 0b011010: op = OP_VMSLTU; break;
                 case 0b011011: op = OP_VMSLT; break;
                 case 0b011100: op = OP_VMSLEU; break;
                 case 0b011101: op = OP_VMSLE; break;
-                case 0b011110: op = OP_VMSGTU; break; // Added missing
-                case 0b011111: op = OP_VMSGT; break;
+                case 0b011111: op = OP_VMSGT; break; // Check logic
                 case 0b100000: op = OP_VSADDU; break;
                 case 0b100001: op = OP_VSADD; break;
                 case 0b100010: op = OP_VSSUBU; break;
@@ -101,19 +99,10 @@ void hp_vpu_decode::decode_combinational(
                  case 0b000101: op = OP_VREDMIN; break;
                  case 0b000110: op = OP_VREDMAXU; break;
                  case 0b000111: op = OP_VREDMAX; break;
+                 case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // vm=0 is merge
                  case 0b001110: op = OP_VSLIDE1UP; break;
                  case 0b001111: op = OP_VSLIDE1DN; break;
-                 // Mask Logical Ops (Missing in previous)
-                 case 0b011001: op = OP_VMAND_MM; break;
-                 case 0b011101: op = OP_VMNAND_MM; break;
-                 case 0b011000: op = OP_VMANDN_MM; break;
-                 case 0b011011: op = OP_VMXOR_MM; break;
-                 case 0b011010: op = OP_VMOR_MM; break;
-                 case 0b011110: op = OP_VMNOR_MM; break;
-                 case 0b011100: op = OP_VMORN_MM; break;
-                 case 0b011111: op = OP_VMXNOR_MM; break;
-
-                 case 0b010000: op = (vs1 == 16) ? OP_VCPOP : OP_VFIRST; break;
+                 case 0b010000: op = (vs1 == 16) ? OP_VCPOP : OP_VFIRST; break; // 10000=vcpop, 10001=vfirst
                  case 0b010100: // Mask/Index
                     if (vs1 == 1) op = OP_VMSBF;
                     else if (vs1 == 2) op = OP_VMSOF;
@@ -160,6 +149,10 @@ void hp_vpu_decode::decode_pipeline() {
 
         // Pipeline stall handling
         if (!stall_i.read()) {
+            // If in sequencer, continue generating micro-ops
+            // Simplification: For now we don't implement the LMUL sequencer in SystemC yet
+            // Just accept new instruction if valid
+
             if (valid_i.read()) {
                 d1_valid.write(true);
                 d1_instr.write(instr_i.read());
@@ -185,12 +178,13 @@ void hp_vpu_decode::output_logic() {
     decode_combinational(d1_instr.read(), op, vd, vs1, vs2, vm, is_vx, imm);
 
     // Outputs
-    valid_o.write(d1_valid.read());
+    valid_o.write(d1_valid.read()); // Simple pass-through for now
     op_o.write(op);
     vd_o.write(vd);
     vs1_o.write(vs1);
     vs2_o.write(vs2);
-    // Accumulator handling (vs3) - Simplified for now
+    // Accumulator handling (vs3):
+    // For MAC ops, vs3 is the old vd. For mask/vmv ops, it might be old_vd too.
     vs3_o.write(vd);
 
     vm_o.write(vm);
@@ -198,6 +192,7 @@ void hp_vpu_decode::output_logic() {
 
     // Scalar mux: immediate vs rs1
     if (is_vx) {
+        // Check if instruction uses immediate (OPIVI)
         sc_uint<3> funct3 = d1_instr.read()(14, 12);
         if (funct3 == 0b011) { // OPIVI
             scalar_o.write(imm);
