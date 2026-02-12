@@ -51,6 +51,7 @@ void hp_vpu_decode::decode_combinational(
                 case 0b011011: op = OP_VMSLT; break;
                 case 0b011100: op = OP_VMSLEU; break;
                 case 0b011101: op = OP_VMSLE; break;
+                case 0b011110: op = OP_VMSGTU; break;
                 case 0b011111: op = OP_VMSGT; break; // Check logic
                 case 0b100000: op = OP_VSADDU; break;
                 case 0b100001: op = OP_VSADD; break;
@@ -69,6 +70,7 @@ void hp_vpu_decode::decode_combinational(
                 case 0b001100: op = OP_VRGATHER; break;
                 case 0b001110: op = (is_vx) ? OP_VSLIDEUP : OP_VRGATHEREI16; break;
                 case 0b001111: op = OP_VSLIDEDN; break;
+                case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // vmerge.v.i / vmv.v.i
                 default: op = OP_NOP;
             }
             break;
@@ -100,6 +102,17 @@ void hp_vpu_decode::decode_combinational(
                  case 0b000110: op = OP_VREDMAXU; break;
                  case 0b000111: op = OP_VREDMAX; break;
                  case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // vm=0 is merge
+
+                 // Mask Logic Ops (vmand.mm, etc)
+                 case 0b011001: op = OP_VMAND_MM; break;  // vmand.mm
+                 case 0b011101: op = OP_VMNAND_MM; break; // vmnand.mm
+                 case 0b011000: op = OP_VMANDN_MM; break; // vmandn.mm
+                 case 0b011011: op = OP_VMXOR_MM; break;  // vmxor.mm
+                 case 0b011010: op = OP_VMOR_MM; break;   // vmor.mm
+                 case 0b011110: op = OP_VMNOR_MM; break;  // vmnor.mm
+                 case 0b011100: op = OP_VMORN_MM; break;  // vmorn.mm
+                 case 0b011111: op = OP_VMXNOR_MM; break; // vmxnor.mm
+
                  case 0b001110: op = OP_VSLIDE1UP; break;
                  case 0b001111: op = OP_VSLIDE1DN; break;
                  case 0b010000: op = (vs1 == 16) ? OP_VCPOP : OP_VFIRST; break; // 10000=vcpop, 10001=vfirst

@@ -127,15 +127,17 @@ SC_MODULE(hp_vpu_lanes) {
 
     // ALU functions
     sc_biguint<DLEN> alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, bool is_sub);
-    sc_biguint<DLEN> alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
+    sc_biguint<DLEN> alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, bool high, bool signed_a, bool signed_b);
     sc_biguint<DLEN> alu_logic(sc_biguint<DLEN> a, sc_biguint<DLEN> b, vpu_op_e op);
     sc_biguint<DLEN> alu_shift(sc_biguint<DLEN> val, sc_biguint<DLEN> shamt, sew_e sew, vpu_op_e op);
     sc_biguint<DLEN> alu_minmax(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
+    sc_biguint<DLEN> alu_cmp(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
     sc_biguint<DLEN> alu_sat(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
     sc_biguint<DLEN> alu_permute(sc_biguint<DLEN> vs2, sc_biguint<DLEN> vs1, sc_uint<32> scalar, sew_e sew, vpu_op_e op);
     sc_biguint<DLEN> alu_narrowing(sc_biguint<DLEN> vs2, sc_biguint<DLEN> vs1, sew_e sew, vpu_op_e op);
     sc_biguint<DLEN> alu_lut(vpu_op_e op, sc_biguint<DLEN> idx, sew_e sew);
     sc_biguint<DLEN> alu_int4(sc_biguint<DLEN> val, vpu_op_e op);
+    sc_biguint<DLEN> apply_mask(sc_biguint<DLEN> res, sc_biguint<DLEN> old_vd, sc_biguint<DLEN> mask, bool vm, sew_e sew);
 
     bool is_reduction(vpu_op_e op);
     bool is_widening(vpu_op_e op);
