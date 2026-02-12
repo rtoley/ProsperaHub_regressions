@@ -1,0 +1,165 @@
+##########################################################
+#  Hyperplane VPU — GEMV Inference Benchmark
+#  VLEN=64  DLEN=64  NLANES=1  ELEN=32
+#  Pipeline: D1-D2-OF-E1-E1m-E2-E3-WB (8 stages)
+##########################################################
+
+=== PART 1: ALU BASELINE (no data hazards) ===
+
+  ---- Baseline: 64 vadd.vv (no hazards) ----
+    75 cycles for 64 ops -> 0.853 vec ops/cycle
+
+=== PART 2: PURE MAC PIPELINE THROUGHPUT ===
+  (K=16, SEW=8, weights pre-loaded, NO DMA during compute)
+
+  ---- Pure MAC: 1 accumulators, K=16 (no DMA) ----
+    118 cycles for 16 vec MACs (128 elem MACs)
+    Vec MACs/cycle:  0.136
+    Elem MACs/cycle: 1.1  (peak=8)
+    Pipeline util:   13.6%
+
+  ---- Pure MAC: 2 accumulators, K=16 (no DMA) ----
+    119 cycles for 32 vec MACs (256 elem MACs)
+    Vec MACs/cycle:  0.269
+    Elem MACs/cycle: 2.2  (peak=8)
+    Pipeline util:   26.9%
+
+  ---- Pure MAC: 4 accumulators, K=16 (no DMA) ----
+    121 cycles for 64 vec MACs (512 elem MACs)
+    Vec MACs/cycle:  0.529
+    Elem MACs/cycle: 4.2  (peak=8)
+    Pipeline util:   52.9%
+
+  ---- Pure MAC: 8 accumulators, K=16 (no DMA) ----
+    140 cycles for 128 vec MACs (1024 elem MACs)
+    Vec MACs/cycle:  0.914
+    Elem MACs/cycle: 7.3  (peak=8)
+    Pipeline util:   91.4%
+
+  ---- Pure MAC: 8 accumulators, K=64 (no DMA) ----
+    524 cycles for 512 vec MACs (4096 elem MACs)
+    Vec MACs/cycle:  0.977
+    Elem MACs/cycle: 7.8  (peak=8)
+    Pipeline util:   97.7%
+
+  ---- Pure MAC: 8 accumulators, K=128 (no DMA) ----
+    1036 cycles for 1024 vec MACs (8192 elem MACs)
+    Vec MACs/cycle:  0.988
+    Elem MACs/cycle: 7.9  (peak=8)
+    Pipeline util:   98.8%
+
+  ---- Pure MAC: 4 accumulators, K=128 (no DMA) ----
+    905 cycles for 512 vec MACs (4096 elem MACs)
+    Vec MACs/cycle:  0.566
+    Elem MACs/cycle: 4.5  (peak=8)
+    Pipeline util:   56.6%
+
+=== PART 2b: ALU BASELINE (larger burst) ===
+
+  ---- Baseline: 256 vadd.vv (no hazards) ----
+    267 cycles for 256 ops -> 0.959 vec ops/cycle
+
+=== PART 3: MAC + WEIGHT STREAMING (DMA overhead) ===
+  (K=16 inner dimension, SEW=8, DMA reload per K step)
+
+  ---- GEMV Benchmark: 1 accumulators, K=16, GELU=0 ----
+    Compute: 118 cycles for 16 vector MACs (128 element MACs)
+    -----------------------------------------------
+    Total cycles:      118
+    Vector ops:        16
+    Vec MACs/cycle:    0.136
+    Elem MACs/cycle:   1.1  (peak=8)
+    MAC utilization:   13.6%
+    -----------------------------------------------
+
+  ---- GEMV Benchmark: 8 accumulators, K=16, GELU=0 ----
+    Compute: 260 cycles for 128 vector MACs (1024 element MACs)
+    -----------------------------------------------
+    Total cycles:      260
+    Vector ops:        128
+    Vec MACs/cycle:    0.492
+    Elem MACs/cycle:   3.9  (peak=8)
+    MAC utilization:   49.2%
+    -----------------------------------------------
+
+  ---- GEMV Benchmark: 8 accumulators, K=64, GELU=0 ----
+    Compute: 1028 cycles for 512 vector MACs (4096 element MACs)
+    -----------------------------------------------
+    Total cycles:      1028
+    Vector ops:        512
+    Vec MACs/cycle:    0.498
+    Elem MACs/cycle:   4.0  (peak=8)
+    MAC utilization:   49.8%
+    -----------------------------------------------
+
+  ---- GEMV Benchmark: 8 accumulators, K=128, GELU=0 ----
+    Compute: 2052 cycles for 1024 vector MACs (8192 element MACs)
+    -----------------------------------------------
+    Total cycles:      2052
+    Vector ops:        1024
+    Vec MACs/cycle:    0.499
+    Elem MACs/cycle:   4.0  (peak=8)
+    MAC utilization:   49.9%
+    -----------------------------------------------
+
+=== PART 4: GEMV + GELU ACTIVATION ===
+
+  ---- GEMV Benchmark: 8 accumulators, K=16, GELU=1 ----
+    Compute: 260 cycles for 128 vector MACs (1024 element MACs)
+    Activation (GELU): 24 cycles for 8 vector ops
+    -----------------------------------------------
+    Total cycles:      284
+    Vector ops:        136
+    Vec MACs/cycle:    0.451
+    Elem MACs/cycle:   3.6  (peak=8)
+    MAC utilization:   45.1%
+    -----------------------------------------------
+
+=== PART 5: FULL INFERENCE SCENARIO ===
+
+===========================================================
+  INFERENCE SCENARIO: 2-layer MLP
+  8 output tiles x K=16, SEW=8, VLEN=64
+  128 MAC ops + 8 GELU activations per layer
+===========================================================
+
+  INFERENCE RESULTS:
+    Total cycles:         584
+    Vector MAC ops:       256
+    Activation ops:       16
+    Element MACs:         2048
+    Elem MACs/cycle:      3.5  (peak=8)
+    Vec MAC utilization:  43.8%
+===========================================================
+
+=== PART 6: DOUBLE-BUFFERED GEMV (overlapped DMA) ===
+  (DMA writes to shadow weight bank WHILE compute runs on active bank)
+
+  ---- DBUF GEMV: 8 accumulators, K=16 ----
+    155 cycles for 128 vec MACs (1024 elem MACs)
+    Vec MACs/cycle:  0.826
+    Elem MACs/cycle: 6.6  (peak=8)
+    Pipeline util:   82.6%
+
+  ---- DBUF GEMV: 8 accumulators, K=64 ----
+    587 cycles for 512 vec MACs (4096 elem MACs)
+    Vec MACs/cycle:  0.872
+    Elem MACs/cycle: 7.0  (peak=8)
+    Pipeline util:   87.2%
+
+  ---- DBUF GEMV: 8 accumulators, K=128 ----
+    1163 cycles for 1024 vec MACs (8192 elem MACs)
+    Vec MACs/cycle:  0.880
+    Elem MACs/cycle: 7.0  (peak=8)
+    Pipeline util:   88.0%
+
+  ---- DBUF GEMV: 4 accumulators, K=128 ----
+    905 cycles for 512 vec MACs (4096 elem MACs)
+    Vec MACs/cycle:  0.566
+    Elem MACs/cycle: 4.5  (peak=8)
+    Pipeline util:   56.6%
+
+##########################################################
+#  BENCHMARK COMPLETE
+##########################################################
+tb/hp_vpu_tb_bench.sv:650: $finish called at 22535000 (1ps)

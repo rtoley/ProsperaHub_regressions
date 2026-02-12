@@ -1,0 +1,251 @@
+
+##################################################
+### HAZARD PATTERN TEST (v0.4b)
+### VLEN=64, DLEN=64, NLANES=1
+##################################################
+
+=== GROUP 1: MAC -> non-MAC (RAW hazard) ===
+
+--- Distance 1 ---
+  PASS: v5 = 0x16
+
+--- Distance 2 ---
+  PASS: v5 = 0x16
+
+--- Distance 3 ---
+  PASS: v5 = 0x16
+
+--- Distance 4 ---
+  PASS: v5 = 0x16
+
+--- Distance 5 ---
+  PASS: v5 = 0x16
+
+--- Distance 6 ---
+  PASS: v5 = 0x16
+
+=== GROUP 2: non-MAC -> MAC (RAW on accum) ===
+
+--- Distance 1 ---
+  PASS: v6 = 0x1b
+
+--- Distance 2 ---
+  PASS: v6 = 0x1b
+
+--- Distance 3 ---
+  PASS: v6 = 0x1b
+
+--- Distance 4 ---
+  PASS: v6 = 0x1b
+
+--- Distance 5 ---
+  PASS: v6 = 0x1b
+
+--- Distance 6 ---
+  PASS: v6 = 0x1b
+
+=== GROUP 3: MAC -> MAC same dest (WAW+RAW) ===
+
+--- Distance 1 ---
+[1541000] E1_CAPTURE: vd=7 id=40 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=00000000
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1543000] E1M_CAPTURE: vd=7 op=6 from E1
+[1545000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1545000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1547000] E3_CAPTURE: vd=7 op=6 result[7:0]=06
+[1549000] VRF_WRITE: vd=7
+         result=0606060606060606
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[1549000] VRF_WRITE: vd=7 result[31:0]=06060606 e3=1 r3=0 w2=0
+[1561000] E1_CAPTURE: vd=7 id=41 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=06060606
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1563000] E1M_CAPTURE: vd=7 op=6 from E1
+[1565000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1565000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1567000] E3_CAPTURE: vd=7 op=6 result[7:0]=0c
+[1569000] VRF_WRITE: vd=7
+         result=0c0c0c0c0c0c0c0c
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[1569000] VRF_WRITE: vd=7 result[31:0]=0c0c0c0c e3=1 r3=0 w2=0
+  PASS: v7 = 0x0c
+
+--- Distance 2 ---
+[1655000] E1_CAPTURE: vd=7 id=40 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=00000000
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1657000] E1M_CAPTURE: vd=7 op=6 from E1
+[1659000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1659000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1661000] E3_CAPTURE: vd=7 op=6 result[7:0]=06
+[1663000] VRF_WRITE: vd=7 result[31:0]=06060606 e3=1 r3=0 w2=0
+[1663000] VRF_WRITE: vd=7
+         result=0606060606060606
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[1675000] E1_CAPTURE: vd=7 id=41 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=06060606
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1677000] E1M_CAPTURE: vd=7 op=6 from E1
+[1679000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1679000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1681000] E3_CAPTURE: vd=7 op=6 result[7:0]=0c
+[1683000] VRF_WRITE: vd=7 result[31:0]=0c0c0c0c e3=1 r3=0 w2=0
+[1683000] VRF_WRITE: vd=7
+         result=0c0c0c0c0c0c0c0c
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+  PASS: v7 = 0x0c
+
+--- Distance 3 ---
+[1769000] E1_CAPTURE: vd=7 id=40 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=00000000
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1771000] E1M_CAPTURE: vd=7 op=6 from E1
+[1773000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1773000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1775000] E3_CAPTURE: vd=7 op=6 result[7:0]=06
+[1777000] VRF_WRITE: vd=7
+         result=0606060606060606
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[1777000] VRF_WRITE: vd=7 result[31:0]=06060606 e3=1 r3=0 w2=0
+[1791000] E1_CAPTURE: vd=7 id=41 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=06060606
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1793000] E1M_CAPTURE: vd=7 op=6 from E1
+[1795000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1795000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1797000] E3_CAPTURE: vd=7 op=6 result[7:0]=0c
+[1799000] VRF_WRITE: vd=7 result[31:0]=0c0c0c0c e3=1 r3=0 w2=0
+[1799000] VRF_WRITE: vd=7
+         result=0c0c0c0c0c0c0c0c
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+  PASS: v7 = 0x0c
+
+--- Distance 4 ---
+[1885000] E1_CAPTURE: vd=7 id=40 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=00000000
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1887000] E1M_CAPTURE: vd=7 op=6 from E1
+[1889000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1889000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1891000] E3_CAPTURE: vd=7 op=6 result[7:0]=06
+[1893000] VRF_WRITE: vd=7
+         result=0606060606060606
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[1893000] VRF_WRITE: vd=7 result[31:0]=06060606 e3=1 r3=0 w2=0
+[1915000] E1_CAPTURE: vd=7 id=41 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=06060606
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[1917000] E1M_CAPTURE: vd=7 op=6 from E1
+[1919000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[1919000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[1921000] E3_CAPTURE: vd=7 op=6 result[7:0]=0c
+[1923000] VRF_WRITE: vd=7 result[31:0]=0c0c0c0c e3=1 r3=0 w2=0
+[1923000] VRF_WRITE: vd=7
+         result=0c0c0c0c0c0c0c0c
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+  PASS: v7 = 0x0c
+
+--- Distance 5 ---
+[2001000] E1_CAPTURE: vd=7 id=40 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=00000000
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[2003000] E1M_CAPTURE: vd=7 op=6 from E1
+[2005000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[2005000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[2007000] E3_CAPTURE: vd=7 op=6 result[7:0]=06
+[2009000] VRF_WRITE: vd=7
+         result=0606060606060606
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[2009000] VRF_WRITE: vd=7 result[31:0]=06060606 e3=1 r3=0 w2=0
+[2045000] E1_CAPTURE: vd=7 id=41 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=06060606
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[2047000] E1M_CAPTURE: vd=7 op=6 from E1
+[2049000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[2049000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[2051000] E3_CAPTURE: vd=7 op=6 result[7:0]=0c
+[2053000] VRF_WRITE: vd=7
+         result=0c0c0c0c0c0c0c0c
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[2053000] VRF_WRITE: vd=7 result[31:0]=0c0c0c0c e3=1 r3=0 w2=0
+  PASS: v7 = 0x0c
+
+--- Distance 6 ---
+[2129000] E1_CAPTURE: vd=7 id=40 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=00000000
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[2131000] E1M_CAPTURE: vd=7 op=6 from E1
+[2133000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[2133000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[2135000] E3_CAPTURE: vd=7 op=6 result[7:0]=06
+[2137000] VRF_WRITE: vd=7
+         result=0606060606060606
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+[2137000] VRF_WRITE: vd=7 result[31:0]=06060606 e3=1 r3=0 w2=0
+[2183000] E1_CAPTURE: vd=7 id=41 op=6 is_mul=1
+         vs2(a)[31:0]=03030303 vs1(b)[31:0]=02020202 vs3(c)[31:0]=06060606
+         e1m_valid=0 mul_stall=0 mac_stall=0
+[2185000] E1M_CAPTURE: vd=7 op=6 from E1
+[2187000] E1M_CLEAR: vd=7 op=6 advancing to E2
+[2187000] E2_CAPTURE_FROM_E1M: vd=7 op=6
+[2189000] E3_CAPTURE: vd=7 op=6 result[7:0]=0c
+[2191000] VRF_WRITE: vd=7 result[31:0]=0c0c0c0c e3=1 r3=0 w2=0
+[2191000] VRF_WRITE: vd=7
+         result=0c0c0c0c0c0c0c0c
+         e3_valid=1 e3_vd=7 | r3_valid=0 r3_vd=0 | w2_valid=0 w2_vd=0
+  PASS: v7 = 0x0c
+
+=== GROUP 4: VMUL -> non-MAC (E1m RAW) ===
+
+--- Distance 1 ---
+  PASS: v9 = 0x16
+
+--- Distance 2 ---
+  PASS: v9 = 0x16
+
+--- Distance 3 ---
+  PASS: v9 = 0x16
+
+--- Distance 4 ---
+  PASS: v9 = 0x16
+
+--- Distance 5 ---
+  PASS: v9 = 0x16
+
+--- Distance 6 ---
+  PASS: v9 = 0x16
+
+##################################################
+### HAZARD TEST SUMMARY
+##################################################
+  Total: 24  Passed: 24  Failed: 0
+
+  HAZARD TEST PASS
+##################################################
+
+tb/hp_vpu_hazard_test.sv:265: $finish called at 3049000 (1ps)
+
+==================================================
+STRESS TEST INSTRUMENTATION - FINAL REPORT
+==================================================
+Total cycles:              1515
+
+VRF Write Contentions:     0
+  - e3 && r3 contentions:  0
+  - e3 && w2 contentions:  0
+  - r3 && w2 contentions:  0
+
+Pipeline Valid Cycles:
+  - e3_valid cycles:       108
+  - r3_valid cycles:       0
+  - w2_valid cycles:       0
+
+Stall Statistics:
+  - mul_stall cycles:      0
+  - mac_stall cycles:      0
+  - red_busy cycles:       0
+  - wide_busy cycles:      0
+  - total stall cycles:    0
+  - max stall streak:      0
+==================================================

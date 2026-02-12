@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "name": "hyperplane_vpu",
+    "version": "0.3d",
+    "description": "Arty A7-100T config (VLEN=64, DLEN=64)"
+  },
+  "parameters": {
+    "VLEN": 64,
+    "DLEN": 64,
+    "NUM_REGS": 32,
+    "CVXIF_ID_W": 8
+  },
+  "features": {
+    "vmadd_vnmsub": true,
+    "fixed_point": true,
+    "reductions": true,
+    "mask_logical": true,
+    "widening": true,
+    "widening_mac": true,
+    "narrowing_shift": true,
+    "compliance_tests": false,
+    "lut_instructions": true,
+    "fractional_lmul": true,
+    "int4_pack_unpack": true,
+    "lmul_multi_uop": true,
+    "enable_csr": true,
+    "split_reduction_pipeline": true
+  },
+  "sew_support": [8, 16, 32],
+  "target": {
+    "fpga": "xc7a100t-csg324-1",
+    "frequency_mhz": 50
+  },
+  "test": {
+    "stress_test_max_instructions": 1000,
+    "enable_long_stress_test": false,
+    "enable_vcd_dump": false
+  }
+}
