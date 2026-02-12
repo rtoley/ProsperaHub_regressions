@@ -10,6 +10,14 @@ int sc_main(int argc, char* argv[]) {
     sc_signal<sc_uint<32>> x_issue_instr;
     sc_signal<sc_uint<CVXIF_ID_W>> x_issue_id;
     sc_signal<bool> x_issue_ready;
+    // Added signals for binding
+    sc_signal<sc_uint<32>> x_issue_rs1;
+    sc_signal<sc_uint<32>> x_issue_rs2;
+    sc_signal<sc_uint<32>> csr_vtype;
+    sc_signal<sc_uint<32>> csr_vl;
+    sc_signal<bool> dma_we;
+    sc_signal<sc_uint<5>> dma_addr;
+    sc_signal<sc_biguint<DLEN>> dma_wdata;
 
     // Instantiate Top
     hp_vpu_top top("top");
@@ -18,7 +26,14 @@ int sc_main(int argc, char* argv[]) {
     top.x_issue_valid_i(x_issue_valid);
     top.x_issue_instr_i(x_issue_instr);
     top.x_issue_id_i(x_issue_id);
+    top.x_issue_rs1_i(x_issue_rs1);
+    top.x_issue_rs2_i(x_issue_rs2);
     top.x_issue_ready_o(x_issue_ready);
+    top.csr_vtype_i(csr_vtype);
+    top.csr_vl_i(csr_vl);
+    top.dma_we_i(dma_we);
+    top.dma_addr_i(dma_addr);
+    top.dma_wdata_i(dma_wdata);
 
     // Trace
     sc_trace_file *tf = sc_create_vcd_trace_file("wave_systemc");

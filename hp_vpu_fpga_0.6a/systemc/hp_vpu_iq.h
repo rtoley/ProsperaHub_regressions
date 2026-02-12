@@ -64,9 +64,6 @@ SC_MODULE(hp_vpu_iq) {
             wr_ptr.write(0);
             rd_ptr.write(0);
             count.write(0);
-            push_ready_o.write(false); // RTL might have ready low during reset? Actually usually high unless full.
-                                       // Assuming reset clears ready for a cycle.
-            pop_valid_o.write(false);
             return;
         }
 
@@ -110,15 +107,22 @@ SC_MODULE(hp_vpu_iq) {
     void output_logic() {
         int cnt = count.read();
         int rd = rd_ptr.read();
+        bool push = push_valid_i.read();
 
-        // Push ready if not full
-        push_ready_o.write(cnt < DEPTH);
+        // Bypass logic
+        bool empty = (cnt == 0);
+        bool bypass = empty && push;
 
-        // Pop valid if not empty
-        bool valid = (cnt > 0);
+        // Pop valid if not empty OR bypass
+        bool valid = !empty || bypass;
         pop_valid_o.write(valid);
 
-        if (valid) {
+        if (bypass) {
+            pop_instr_o.write(push_instr_i.read());
+            pop_id_o.write(push_id_i.read());
+            pop_rs1_o.write(push_rs1_i.read());
+            pop_rs2_o.write(push_rs2_i.read());
+        } else if (!empty) {
             pop_instr_o.write(fifo[rd].instr);
             pop_id_o.write(fifo[rd].id);
             pop_rs1_o.write(fifo[rd].rs1);
@@ -129,6 +133,9 @@ SC_MODULE(hp_vpu_iq) {
             pop_rs1_o.write(0);
             pop_rs2_o.write(0);
         }
+
+        // Push ready if not full
+        push_ready_o.write(cnt < DEPTH);
     }
 
     SC_CTOR(hp_vpu_iq) {
@@ -136,7 +143,7 @@ SC_MODULE(hp_vpu_iq) {
         reset_signal_is(rst_n, false);
 
         SC_METHOD(output_logic);
-        sensitive << count << rd_ptr; // Updates when state changes
+        sensitive << count << rd_ptr << push_valid_i << push_instr_i << push_id_i << push_rs1_i << push_rs2_i;
     }
 };
 

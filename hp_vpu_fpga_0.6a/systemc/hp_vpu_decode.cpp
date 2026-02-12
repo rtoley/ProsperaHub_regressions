@@ -16,7 +16,7 @@ void hp_vpu_decode::decode_combinational(
     vm     = instr[25];
 
     // Immediate extraction
-    sc_int<5> simm5 = vs1;
+    sc_int<5> simm5 = (sc_int<5>)vs1;
     imm = (sc_int<32>)simm5;
 
     // Default
@@ -149,18 +149,61 @@ void hp_vpu_decode::decode_pipeline() {
 
         // Pipeline stall handling
         if (!stall_i.read()) {
-            // If in sequencer, continue generating micro-ops
-            // Simplification: For now we don't implement the LMUL sequencer in SystemC yet
-            // Just accept new instruction if valid
+            if (in_multicycle_seq.read()) {
+                // Sequencer Active: Generate next micro-op
+                int cnt = uop_counter.read() + 1;
+                uop_counter.write(cnt);
+                int total = uop_total.read();
 
-            if (valid_i.read()) {
+                if (cnt >= total - 1) {
+                    in_multicycle_seq.write(false);
+                }
+
+                // Generate new instruction bits based on current d1_instr
+                sc_uint<32> instr = d1_instr.read();
+
+                // Decode to check op type for increment logic
+                vpu_op_e op; sc_uint<5> vd, vs1, vs2; bool vm, is_vx; sc_uint<32> imm;
+                decode_combinational(instr, op, vd, vs1, vs2, vm, is_vx, imm);
+
+                bool is_red = (op >= OP_VREDSUM && op <= OP_VREDMAX);
+
+                // Increment VD if not reduction
+                if (!is_red) {
+                    instr(11, 7) = vd + 1;
+                }
+
+                // Increment VS2 (Accumulator or Source 2)
+                instr(24, 20) = vs2 + 1;
+
+                // Increment VS1 if vector (.vv) and not reduction init
+                if (!is_vx && !is_red) {
+                    instr(19, 15) = vs1 + 1;
+                }
+
+                d1_instr.write(instr);
                 d1_valid.write(true);
-                d1_instr.write(instr_i.read());
-                d1_id.write(id_i.read());
-                d1_rs1.write(rs1_i.read());
-                d1_rs2.write(rs2_i.read());
+
             } else {
-                d1_valid.write(false);
+                // Idle: Accept new instruction
+                if (valid_i.read()) {
+                    d1_valid.write(true);
+                    d1_instr.write(instr_i.read());
+                    d1_id.write(id_i.read());
+                    d1_rs1.write(rs1_i.read());
+                    d1_rs2.write(rs2_i.read());
+
+                    // Initialize Sequencer
+                    int uops = 1 << lmul; // 1, 2, 4, 8
+                    uop_total.write(uops);
+                    uop_counter.write(0);
+
+                    if (uops > 1) {
+                        in_multicycle_seq.write(true);
+                    }
+                } else {
+                    d1_valid.write(false);
+                }
             }
         }
 
@@ -178,7 +221,7 @@ void hp_vpu_decode::output_logic() {
     decode_combinational(d1_instr.read(), op, vd, vs1, vs2, vm, is_vx, imm);
 
     // Outputs
-    valid_o.write(d1_valid.read()); // Simple pass-through for now
+    valid_o.write(d1_valid.read());
     op_o.write(op);
     vd_o.write(vd);
     vs1_o.write(vs1);
@@ -206,9 +249,14 @@ void hp_vpu_decode::output_logic() {
     sew_o.write(current_sew.read());
     lmul_o.write(current_lmul.read());
     id_o.write(d1_id.read());
-    is_last_uop_o.write(true); // Default until sequencer is fully implemented
 
-    ready_o.write(!stall_i.read()); // Ready if not stalled
+    // Last uop logic
+    bool is_last = (uop_counter.read() == uop_total.read() - 1);
+    is_last_uop_o.write(is_last);
+
+    // Ready if not stalled AND not busy sequencing (unless last uop cycle? No, keep it simple)
+    // If sequencing, we are busy.
+    ready_o.write(!stall_i.read() && !in_multicycle_seq.read());
 }
 
 } // namespace hp_vpu

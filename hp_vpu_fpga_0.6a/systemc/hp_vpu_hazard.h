@@ -28,6 +28,7 @@ SC_MODULE(hp_vpu_hazard) {
 
     // Multicycle Control
     sc_in<bool> multicycle_busy_i;
+    sc_in<bool> drain_stall_i;
 
     // Outputs
     sc_out<bool> stall_dec_o;
@@ -35,8 +36,8 @@ SC_MODULE(hp_vpu_hazard) {
     void hazard_logic() {
         bool hazard = false;
 
-        // Multicycle Busy Stalls Decode
-        if (multicycle_busy_i.read()) {
+        // Multicycle Busy or Drain Stall Stalls Decode
+        if (multicycle_busy_i.read() || drain_stall_i.read()) {
             stall_dec_o.write(true);
             return;
         }
@@ -76,7 +77,7 @@ SC_MODULE(hp_vpu_hazard) {
                   << r2a_valid_i << r2a_vd_i
                   << r2b_valid_i << r2b_vd_i
                   << w2_valid_i << w2_vd_i
-                  << multicycle_busy_i;
+                  << multicycle_busy_i << drain_stall_i;
     }
 };
 

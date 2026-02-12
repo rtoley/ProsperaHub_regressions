@@ -37,6 +37,7 @@ SC_MODULE(hp_vpu_lanes) {
     sc_out<bool> mac_stall_o;
     sc_out<bool> mul_stall_o;
     sc_out<bool> multicycle_busy_o;
+    sc_out<bool> drain_stall_o;
 
     // Hazard tracking outputs
     sc_out<bool> e1_valid_o; sc_out<sc_uint<5>> e1_vd_o;
@@ -45,6 +46,7 @@ SC_MODULE(hp_vpu_lanes) {
     sc_out<bool> e3_valid_o; sc_out<sc_uint<5>> e3_vd_o;
     sc_out<bool> r2a_valid_o; sc_out<sc_uint<5>> r2a_vd_o;
     sc_out<bool> r2b_valid_o; sc_out<sc_uint<5>> r2b_vd_o;
+    sc_out<bool> w2_valid_o; sc_out<sc_uint<5>> w2_vd_o;
 
     // Internal Pipeline Registers
     // E1 Stage
@@ -63,6 +65,7 @@ SC_MODULE(hp_vpu_lanes) {
     sc_uint<5> e1m_vd;
     sc_uint<CVXIF_ID_W> e1m_id;
     sew_e e1m_sew;
+    sc_biguint<DLEN> e1m_a; // Added for VMADD
     sc_biguint<DLEN> e1m_c;
     bool e1m_is_last_uop;
 
@@ -95,12 +98,22 @@ SC_MODULE(hp_vpu_lanes) {
     sc_biguint<DLEN> r3_result;
     sc_uint<5> r3_vd;
     sc_uint<CVXIF_ID_W> r3_id;
+    // Added storage for Reduction operands
+    sc_biguint<DLEN> r_src; // vs2
+    sc_biguint<DLEN> r_init; // vs1 (init val)
+    vpu_op_e r_op;
+    sew_e r_sew;
 
     // Widening Registers
     bool w2_valid;
     sc_biguint<DLEN> w2_result;
     sc_uint<5> w2_vd;
     sc_uint<CVXIF_ID_W> w2_id;
+    // Added storage for Widening operands
+    sc_biguint<DLEN> w_src1; // vs2
+    sc_biguint<DLEN> w_src2; // vs1
+    vpu_op_e w_op;
+    sew_e w_sew;
 
     void logic_thread();
     void outputs_method();
@@ -113,9 +126,17 @@ SC_MODULE(hp_vpu_lanes) {
     }
 
     // ALU functions
-    sc_biguint<DLEN> alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
+    sc_biguint<DLEN> alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, bool is_sub);
     sc_biguint<DLEN> alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
+    sc_biguint<DLEN> alu_logic(sc_biguint<DLEN> a, sc_biguint<DLEN> b, vpu_op_e op);
+    sc_biguint<DLEN> alu_shift(sc_biguint<DLEN> val, sc_biguint<DLEN> shamt, sew_e sew, vpu_op_e op);
+    sc_biguint<DLEN> alu_minmax(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
+    sc_biguint<DLEN> alu_sat(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew, vpu_op_e op);
+    sc_biguint<DLEN> alu_permute(sc_biguint<DLEN> vs2, sc_biguint<DLEN> vs1, sc_uint<32> scalar, sew_e sew, vpu_op_e op);
+    sc_biguint<DLEN> alu_narrowing(sc_biguint<DLEN> vs2, sc_biguint<DLEN> vs1, sew_e sew, vpu_op_e op);
     sc_biguint<DLEN> alu_lut(vpu_op_e op, sc_biguint<DLEN> idx, sew_e sew);
+    sc_biguint<DLEN> alu_int4(sc_biguint<DLEN> val, vpu_op_e op);
+
     bool is_reduction(vpu_op_e op);
     bool is_widening(vpu_op_e op);
 };
