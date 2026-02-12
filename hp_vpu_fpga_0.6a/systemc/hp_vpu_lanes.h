@@ -10,9 +10,9 @@ SC_MODULE(hp_vpu_lanes) {
     // Clock/Reset
     sc_in<bool> clk;
     sc_in<bool> rst_n;
-    sc_in<bool> stall_i;
+    sc_in<bool> stall_i; // From Hazard (sram_stall usually)
 
-    // Inputs
+    // Inputs (from Decode)
     sc_in<bool> valid_i;
     sc_in<int>  op_i; // vpu_op_e
     sc_in<sc_biguint<DLEN>> vs1_i;
@@ -25,24 +25,26 @@ SC_MODULE(hp_vpu_lanes) {
     sc_in<int>  sew_i; // sew_e
     sc_in<sc_uint<5>> vd_i;
     sc_in<sc_uint<CVXIF_ID_W>> id_i;
+    sc_in<bool> is_last_uop_i;
 
     // Outputs
     sc_out<bool> valid_o;
     sc_out<sc_biguint<DLEN>> result_o;
     sc_out<sc_uint<5>> vd_o;
     sc_out<sc_uint<CVXIF_ID_W>> id_o;
+    sc_out<bool> is_last_uop_o;
+
     sc_out<bool> mac_stall_o;
     sc_out<bool> mul_stall_o;
+    sc_out<bool> multicycle_busy_o;
 
-    // Hazard tracking outputs (simplified)
-    sc_out<bool> e1_valid_o;
-    sc_out<sc_uint<5>> e1_vd_o;
-    sc_out<bool> e1m_valid_o;
-    sc_out<sc_uint<5>> e1m_vd_o;
-    sc_out<bool> e2_valid_o;
-    sc_out<sc_uint<5>> e2_vd_o;
-    sc_out<bool> e3_valid_o;
-    sc_out<sc_uint<5>> e3_vd_o;
+    // Hazard tracking outputs
+    sc_out<bool> e1_valid_o; sc_out<sc_uint<5>> e1_vd_o;
+    sc_out<bool> e1m_valid_o; sc_out<sc_uint<5>> e1m_vd_o;
+    sc_out<bool> e2_valid_o; sc_out<sc_uint<5>> e2_vd_o;
+    sc_out<bool> e3_valid_o; sc_out<sc_uint<5>> e3_vd_o;
+    sc_out<bool> r2a_valid_o; sc_out<sc_uint<5>> r2a_vd_o;
+    sc_out<bool> r2b_valid_o; sc_out<sc_uint<5>> r2b_vd_o;
 
     // Internal Pipeline Registers
     // E1 Stage
@@ -52,15 +54,17 @@ SC_MODULE(hp_vpu_lanes) {
     sc_uint<5> e1_vd;
     sc_uint<CVXIF_ID_W> e1_id;
     sew_e e1_sew;
+    bool e1_is_last_uop;
 
     // E1m Stage
     bool e1m_valid;
     vpu_op_e e1m_op;
-    sc_biguint<DLEN> e1m_mul_res; // Simplified: storing full mul result
+    sc_biguint<DLEN> e1m_mul_res;
     sc_uint<5> e1m_vd;
     sc_uint<CVXIF_ID_W> e1m_id;
     sew_e e1m_sew;
-    sc_biguint<DLEN> e1m_c; // Accumulator passed through
+    sc_biguint<DLEN> e1m_c;
+    bool e1m_is_last_uop;
 
     // E2 Stage
     bool e2_valid;
@@ -69,12 +73,34 @@ SC_MODULE(hp_vpu_lanes) {
     sc_uint<5> e2_vd;
     sc_uint<CVXIF_ID_W> e2_id;
     sew_e e2_sew;
+    bool e2_is_last_uop;
 
     // E3 Stage
     bool e3_valid;
     sc_biguint<DLEN> e3_result;
     sc_uint<5> e3_vd;
     sc_uint<CVXIF_ID_W> e3_id;
+    bool e3_is_last_uop;
+
+    // Reduction Pipeline State
+    enum red_state_e { RED_IDLE, RED_R1, RED_R2A, RED_R2B, RED_R3 };
+    sc_signal<int> red_state; // red_state_e
+
+    // Widening Pipeline State
+    enum wide_state_e { WIDE_IDLE, WIDE_W1, WIDE_W2 };
+    sc_signal<int> wide_state; // wide_state_e
+
+    // Reduction Registers (simplified representation)
+    bool r3_valid;
+    sc_biguint<DLEN> r3_result;
+    sc_uint<5> r3_vd;
+    sc_uint<CVXIF_ID_W> r3_id;
+
+    // Widening Registers
+    bool w2_valid;
+    sc_biguint<DLEN> w2_result;
+    sc_uint<5> w2_vd;
+    sc_uint<CVXIF_ID_W> w2_id;
 
     void logic_thread();
     void outputs_method();
@@ -83,13 +109,15 @@ SC_MODULE(hp_vpu_lanes) {
         SC_CTHREAD(logic_thread, clk.pos());
         reset_signal_is(rst_n, false);
         SC_METHOD(outputs_method);
-        sensitive << clk; // Just to update outputs based on internal state
+        sensitive << clk;
     }
 
-    // Helper ALU functions
+    // ALU functions
     sc_biguint<DLEN> alu_add(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
     sc_biguint<DLEN> alu_mul(sc_biguint<DLEN> a, sc_biguint<DLEN> b, sew_e sew);
     sc_biguint<DLEN> alu_lut(vpu_op_e op, sc_biguint<DLEN> idx, sew_e sew);
+    bool is_reduction(vpu_op_e op);
+    bool is_widening(vpu_op_e op);
 };
 
 } // namespace hp_vpu

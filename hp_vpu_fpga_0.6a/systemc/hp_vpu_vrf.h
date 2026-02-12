@@ -6,17 +6,18 @@
 
 namespace hp_vpu {
 
+// Vector Register File (Mock)
+// Supports split bank modeling logic (simplified as flat array for functionality)
+// Models synchronous read behavior (captured in D2/OF)
 SC_MODULE(hp_vpu_vrf) {
-    // Clock/Reset
+    // Clock
     sc_in<bool> clk;
 
-    // Read Ports (Async/Sync depending on RTL behavior, usually Sync in FPGA RAM)
-    // RTL hp_vpu_vrf.sv usually has sync read.
-    // D2 -> OF reads vs1, vs2, vs3.
+    // Read Ports
     sc_in<sc_uint<5>> raddr1_i;
     sc_in<sc_uint<5>> raddr2_i;
     sc_in<sc_uint<5>> raddr3_i;
-    sc_in<sc_uint<5>> raddr_mask_i; // v0 mask read
+    sc_in<sc_uint<5>> raddr_mask_i;
 
     sc_out<sc_biguint<DLEN>> rdata1_o;
     sc_out<sc_biguint<DLEN>> rdata2_o;
@@ -28,30 +29,28 @@ SC_MODULE(hp_vpu_vrf) {
     sc_in<sc_uint<5>> waddr_i;
     sc_in<sc_biguint<DLEN>> wdata_i;
 
-    // Storage
+    // Internal Storage
     sc_biguint<DLEN> regs[32];
 
     void read_logic() {
-        // Model synchronous BRAM read latency if needed,
-        // but RTL hp_vpu_vrf usually provides data in OF cycle.
-        // If OF captures in posedge, we can provide data combinatorially from array
-        // and let OF register capture it.
+        // Asynchronous read model (RTL registers these at the destination)
+        // In cycle-accurate simulation, we can provide them combinatorially
+        // to the pipeline registers that capture them.
         rdata1_o.write(regs[raddr1_i.read()]);
         rdata2_o.write(regs[raddr2_i.read()]);
         rdata3_o.write(regs[raddr3_i.read()]);
-        rdata_mask_o.write(regs[0]); // Mask always v0? Or indexed? v0.
+        rdata_mask_o.write(regs[0]); // Mask usually hardwired to v0 for now
     }
 
     void write_logic() {
         if (we_i.read()) {
             regs[waddr_i.read()] = wdata_i.read();
-            // cout << "@" << sc_time_stamp() << " VRF Write v" << waddr_i.read() << " = " << wdata_i.read() << endl;
         }
     }
 
     SC_CTOR(hp_vpu_vrf) {
         SC_METHOD(read_logic);
-        sensitive << raddr1_i << raddr2_i << raddr3_i << raddr_mask_i; // Sensitive to address changes (asynch read model for simplicity, captured by pipeline regs)
+        sensitive << raddr1_i << raddr2_i << raddr3_i << raddr_mask_i;
 
         SC_METHOD(write_logic);
         sensitive << clk.pos();
