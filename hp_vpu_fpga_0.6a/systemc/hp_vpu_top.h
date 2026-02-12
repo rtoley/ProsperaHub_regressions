@@ -68,7 +68,8 @@ SC_MODULE(hp_vpu_top) {
     sc_signal<sc_biguint<DLEN>> s_result_o;
     sc_signal<sc_uint<5>> s_vd_o;
     sc_signal<sc_uint<CVXIF_ID_W>> s_id_o;
-    sc_signal<bool> s_mac_stall, s_mul_stall, s_multicycle_busy;
+    sc_signal<bool> s_is_last_uop_o;
+    sc_signal<bool> s_mac_stall, s_mul_stall, s_multicycle_busy, s_drain_stall;
 
     // VRF Mux signals
     sc_signal<bool> vrf_we;
@@ -80,6 +81,7 @@ SC_MODULE(hp_vpu_top) {
     sc_signal<sc_uint<5>> h_e1_vd, h_e1m_vd, h_e2_vd, h_e3_vd;
     sc_signal<bool> h_r2a_valid, h_r2b_valid;
     sc_signal<sc_uint<5>> h_r2a_vd, h_r2b_vd;
+    sc_signal<bool> h_w2_valid; sc_signal<sc_uint<5>> h_w2_vd;
 
     // Dummy flush
     sc_signal<bool> s_flush;
@@ -162,9 +164,11 @@ SC_MODULE(hp_vpu_top) {
         u_hazard->e3_valid_i(h_e3_valid); u_hazard->e3_vd_i(h_e3_vd);
         u_hazard->r2a_valid_i(h_r2a_valid); u_hazard->r2a_vd_i(h_r2a_vd);
         u_hazard->r2b_valid_i(h_r2b_valid); u_hazard->r2b_vd_i(h_r2b_vd);
+        u_hazard->w2_valid_i(h_w2_valid); u_hazard->w2_vd_i(h_w2_vd);
         // Missing OF/WB stages yet - simplified for this step
         u_hazard->stall_dec_o(hazard_stall);
         u_hazard->multicycle_busy_i(s_multicycle_busy);
+        u_hazard->drain_stall_i(s_drain_stall);
 
         // Instantiate VRF
         u_vrf = new hp_vpu_vrf("u_vrf");
@@ -185,7 +189,7 @@ SC_MODULE(hp_vpu_top) {
         u_lanes = new hp_vpu_lanes("u_lanes");
         u_lanes->clk(clk);
         u_lanes->rst_n(rst_n);
-        u_lanes->stall_i(hazard_stall); // Only stalls on hazard
+        u_lanes->stall_i(s_flush); // Tied to 0 (no stall for lanes in this model)
         u_lanes->valid_i(dec_valid);
         u_lanes->op_i(dec_op);
         u_lanes->vs1_i(s_vs1_data);
@@ -204,9 +208,11 @@ SC_MODULE(hp_vpu_top) {
         u_lanes->result_o(s_result_o);
         u_lanes->vd_o(s_vd_o);
         u_lanes->id_o(s_id_o);
+        u_lanes->is_last_uop_o(s_is_last_uop_o);
         u_lanes->mac_stall_o(s_mac_stall);
         u_lanes->mul_stall_o(s_mul_stall);
         u_lanes->multicycle_busy_o(s_multicycle_busy);
+        u_lanes->drain_stall_o(s_drain_stall);
 
         u_lanes->e1_valid_o(h_e1_valid); u_lanes->e1_vd_o(h_e1_vd);
         u_lanes->e1m_valid_o(h_e1m_valid); u_lanes->e1m_vd_o(h_e1m_vd);
@@ -214,6 +220,7 @@ SC_MODULE(hp_vpu_top) {
         u_lanes->e3_valid_o(h_e3_valid); u_lanes->e3_vd_o(h_e3_vd);
         u_lanes->r2a_valid_o(h_r2a_valid); u_lanes->r2a_vd_o(h_r2a_vd);
         u_lanes->r2b_valid_o(h_r2b_valid); u_lanes->r2b_vd_o(h_r2b_vd);
+        u_lanes->w2_valid_o(h_w2_valid); u_lanes->w2_vd_o(h_w2_vd);
 
         SC_METHOD(vrf_control_logic);
         sensitive << dma_we_i << dma_addr_i << dma_wdata_i << s_valid_o << s_vd_o << s_result_o;
