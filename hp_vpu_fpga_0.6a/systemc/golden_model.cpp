@@ -107,7 +107,7 @@ sc_biguint<DLEN> GoldenModel::compute(
         res = do_slide(op, op_a, vs3_data, scalar, sew);
     else if (op == OP_VRGATHER || op == OP_VRGATHEREI16)
         res = do_gather(op, op_a, op_b, sew);
-    else if (op == OP_VMV) res = op_b;
+    else if (op == OP_VMV || op == OP_VMERGE) res = op_b;
     else res = 0;
 
     // Apply Mask
