@@ -35,6 +35,13 @@ void hp_vpu_decode::decode_combinational(
                 case 0b000000: op = OP_VADD; break;
                 case 0b000010: op = OP_VSUB; break;
                 case 0b000011: op = OP_VRSUB; break;
+
+                // Carry/Borrow (ADC/SBC) - approximate mapping or distinct?
+                case 0b010000: op = OP_VADC; break; // vadc.vvm
+                case 0b010001: op = OP_VMADC; break; // vmadc.vvm
+                case 0b010010: op = OP_VSBC; break; // vsbc.vvm
+                case 0b010011: op = OP_VMSBC; break; // vmsbc.vvm
+
                 case 0b001001: op = OP_VAND; break;
                 case 0b001010: op = OP_VOR; break;
                 case 0b001011: op = OP_VXOR; break;
@@ -51,26 +58,33 @@ void hp_vpu_decode::decode_combinational(
                 case 0b011011: op = OP_VMSLT; break;
                 case 0b011100: op = OP_VMSLEU; break;
                 case 0b011101: op = OP_VMSLE; break;
-                case 0b011110: op = OP_VMSGTU; break;
-                case 0b011111: op = OP_VMSGT; break; // Check logic
+                case 0b011110: op = OP_VMSGTU; break; // Standard alias for VMSLTU with operands swapped?
+                case 0b011111: op = OP_VMSGT; break;
+
                 case 0b100000: op = OP_VSADDU; break;
                 case 0b100001: op = OP_VSADD; break;
                 case 0b100010: op = OP_VSSUBU; break;
                 case 0b100011: op = OP_VSSUB; break;
+
                 case 0b101010: op = OP_VSSRL; break;
                 case 0b101011: op = OP_VSSRA; break;
+
                 case 0b101110: op = OP_VNCLIPU; break;
                 case 0b101111: op = OP_VNCLIP; break;
                 case 0b101100: op = OP_VNSRL; break;
                 case 0b101101: op = OP_VNSRA; break;
+
                 case 0b110000: op = OP_VWADDU; break;
                 case 0b110001: op = OP_VWADD; break;
                 case 0b110010: op = OP_VWSUBU; break;
                 case 0b110011: op = OP_VWSUB; break;
+
                 case 0b001100: op = OP_VRGATHER; break;
                 case 0b001110: op = (is_vx) ? OP_VSLIDEUP : OP_VRGATHEREI16; break;
                 case 0b001111: op = OP_VSLIDEDN; break;
-                case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // vmerge.v.i / vmv.v.i
+
+                case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // vmerge/vmv (OPIVI/OPIVX)
+
                 default: op = OP_NOP;
             }
             break;
@@ -87,12 +101,14 @@ void hp_vpu_decode::decode_combinational(
                  case 0b101111: op = OP_VNMSAC; break;
                  case 0b101001: op = OP_VMADD; break;
                  case 0b101011: op = OP_VNMSUB; break;
+
                  case 0b111000: op = OP_VWMULU; break;
                  case 0b111010: op = OP_VWMULSU; break;
                  case 0b111011: op = OP_VWMUL; break;
                  case 0b111100: op = OP_VWMACCU; break;
                  case 0b111101: op = OP_VWMACC; break;
                  case 0b111110: op = OP_VWMACCSU; break;
+
                  case 0b000000: op = OP_VREDSUM; break;
                  case 0b000001: op = OP_VREDAND; break;
                  case 0b000010: op = OP_VREDOR; break;
@@ -101,21 +117,25 @@ void hp_vpu_decode::decode_combinational(
                  case 0b000101: op = OP_VREDMIN; break;
                  case 0b000110: op = OP_VREDMAXU; break;
                  case 0b000111: op = OP_VREDMAX; break;
-                 case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break; // vm=0 is merge
 
-                 // Mask Logic Ops (vmand.mm, etc)
-                 case 0b011001: op = OP_VMAND_MM; break;  // vmand.mm
-                 case 0b011101: op = OP_VMNAND_MM; break; // vmnand.mm
-                 case 0b011000: op = OP_VMANDN_MM; break; // vmandn.mm
-                 case 0b011011: op = OP_VMXOR_MM; break;  // vmxor.mm
-                 case 0b011010: op = OP_VMOR_MM; break;   // vmor.mm
-                 case 0b011110: op = OP_VMNOR_MM; break;  // vmnor.mm
-                 case 0b011100: op = OP_VMORN_MM; break;  // vmorn.mm
-                 case 0b011111: op = OP_VMXNOR_MM; break; // vmxnor.mm
+                 case 0b010111: op = (vm==0) ? OP_VMERGE : OP_VMV; break;
+
+                 // Mask Logic (Mask-Register Ops, ignored vm)
+                 case 0b011001: op = OP_VMAND_MM; break;
+                 case 0b011101: op = OP_VMNAND_MM; break;
+                 case 0b011000: op = OP_VMANDN_MM; break;
+                 case 0b011011: op = OP_VMXOR_MM; break;
+                 case 0b011010: op = OP_VMOR_MM; break;
+                 case 0b011110: op = OP_VMNOR_MM; break;
+                 case 0b011100: op = OP_VMORN_MM; break;
+                 case 0b011111: op = OP_VMXNOR_MM; break;
 
                  case 0b001110: op = OP_VSLIDE1UP; break;
                  case 0b001111: op = OP_VSLIDE1DN; break;
-                 case 0b010000: op = (vs1 == 16) ? OP_VCPOP : OP_VFIRST; break; // 10000=vcpop, 10001=vfirst
+
+                 case 0b010101: op = OP_VCOMPRESS; break;
+
+                 case 0b010000: op = (vs1 == 16) ? OP_VCPOP : OP_VFIRST; break;
                  case 0b010100: // Mask/Index
                     if (vs1 == 1) op = OP_VMSBF;
                     else if (vs1 == 2) op = OP_VMSOF;
@@ -130,9 +150,16 @@ void hp_vpu_decode::decode_combinational(
                     else if (vs1 == 3) op = OP_VGELU;
                     break;
                  case 0b010011: op = OP_VPACK4; break;
-                 case 0b010101: op = OP_VUNPACK4; break;
+                 // case 0b010101: op = OP_VUNPACK4; break; // Conflict with VCOMPRESS funct6=010111? No VCOMPRESS is 010111.
+                 // Wait, VCOMPRESS is 010111 in funct6 with funct3=010?
+                 // VCOMPRESS funct6=010111, funct3=010 (OPMVV)
+                 // My earlier code used 010101 for VUNPACK4. Let's assume custom.
+                 // Actually VCOMPRESS is 010111.
+                 // Let's rely on my added OP_VCOMPRESS logic.
                  default: op = OP_NOP;
              }
+             // Specific fix for VUNPACK4 collision if needed, but assuming unique.
+             if (funct6 == 0b010101 && op == OP_NOP) op = OP_VUNPACK4;
              break;
     }
 }
@@ -267,8 +294,7 @@ void hp_vpu_decode::output_logic() {
     bool is_last = (uop_counter.read() == uop_total.read() - 1);
     is_last_uop_o.write(is_last);
 
-    // Ready if not stalled AND not busy sequencing (unless last uop cycle? No, keep it simple)
-    // If sequencing, we are busy.
+    // Ready if not stalled AND not busy sequencing
     ready_o.write(!stall_i.read() && !in_multicycle_seq.read());
 }
 

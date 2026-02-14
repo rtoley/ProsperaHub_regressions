@@ -50,7 +50,7 @@ SC_MODULE(hp_vpu_lanes) {
 
     // Internal Pipeline Registers
     // E1 Stage
-    bool e1_valid;
+    sc_signal<bool> e1_valid;
     vpu_op_e e1_op;
     sc_biguint<DLEN> e1_a, e1_b, e1_c;
     sc_uint<5> e1_vd;
@@ -59,7 +59,7 @@ SC_MODULE(hp_vpu_lanes) {
     bool e1_is_last_uop;
 
     // E1m Stage
-    bool e1m_valid;
+    sc_signal<bool> e1m_valid;
     vpu_op_e e1m_op;
     sc_biguint<DLEN> e1m_mul_res;
     sc_uint<5> e1m_vd;
@@ -70,7 +70,7 @@ SC_MODULE(hp_vpu_lanes) {
     bool e1m_is_last_uop;
 
     // E2 Stage
-    bool e2_valid;
+    sc_signal<bool> e2_valid;
     vpu_op_e e2_op;
     sc_biguint<DLEN> e2_result;
     sc_uint<5> e2_vd;
@@ -79,7 +79,7 @@ SC_MODULE(hp_vpu_lanes) {
     bool e2_is_last_uop;
 
     // E3 Stage
-    bool e3_valid;
+    sc_signal<bool> e3_valid;
     sc_biguint<DLEN> e3_result;
     sc_uint<5> e3_vd;
     sc_uint<CVXIF_ID_W> e3_id;
@@ -94,7 +94,7 @@ SC_MODULE(hp_vpu_lanes) {
     sc_signal<int> wide_state; // wide_state_e
 
     // Reduction Registers (simplified representation)
-    bool r3_valid;
+    sc_signal<bool> r3_valid;
     sc_biguint<DLEN> r3_result;
     sc_uint<5> r3_vd;
     sc_uint<CVXIF_ID_W> r3_id;
@@ -105,7 +105,7 @@ SC_MODULE(hp_vpu_lanes) {
     sew_e r_sew;
 
     // Widening Registers
-    bool w2_valid;
+    sc_signal<bool> w2_valid;
     sc_biguint<DLEN> w2_result;
     sc_uint<5> w2_vd;
     sc_uint<CVXIF_ID_W> w2_id;
